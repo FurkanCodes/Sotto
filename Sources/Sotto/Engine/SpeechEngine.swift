@@ -1,4 +1,5 @@
 import FluidAudio
+import Foundation
 
 /// A speech-to-text engine. Parakeet on CoreML is the default; transcribe-cpp
 /// models will implement this from an XPC helper in a later phase.
@@ -25,7 +26,11 @@ actor ParakeetEngine: SpeechEngine {
     var isLoaded: Bool { manager != nil }
 
     nonisolated var isDownloaded: Bool {
-        AsrModels.modelsExist(at: AsrModels.defaultCacheDirectory(for: Self.version), version: Self.version)
+        AsrModels.modelsExist(at: directory, version: Self.version)
+    }
+
+    nonisolated var directory: URL {
+        AsrModels.defaultCacheDirectory(for: Self.version)
     }
 
     /// The one network call Sotto makes: fetching the pinned model files.

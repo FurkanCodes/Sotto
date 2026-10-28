@@ -1,12 +1,14 @@
 import AppKit
 import Carbon.HIToolbox
+import SottoCore
 
 /// Watches the dictation key with a listen-only event tap on the main run
 /// loop. It wakes only when a key event arrives; nothing polls.
 ///
-/// The key is right Option on its own. Modifier changes still reach event taps
-/// while Secure Input is on (password fields), so a modifier-only key keeps
-/// working there, unlike key combos (Handy #1578).
+/// The key is a single modifier (right Option, right Command or Fn).
+/// Modifier changes still reach event taps while Secure Input is on
+/// (password fields), so a modifier-only key keeps working there, unlike key
+/// combos (Handy #1578).
 @MainActor
 final class HotkeyMonitor {
     enum Signal: Sendable {
@@ -19,11 +21,29 @@ final class HotkeyMonitor {
     var onSignal: ((Signal, TimeInterval) -> Void)?
     var isRunning: Bool { tap != nil }
 
+    var key = DictationKey.rightOption {
+        didSet { isHeld = false }
+    }
+
     private var tap: CFMachPort?
     private var isHeld = false
-    private let keyCode = Int64(kVK_RightOption)
-    /// NX_DEVICERALTKEYMASK: set while the right Option key is down.
-    private static let rightOptionBit: UInt64 = 0x40
+
+    private var keyCode: Int64 {
+        switch key {
+        case .rightOption: Int64(kVK_RightOption)
+        case .rightCommand: Int64(kVK_RightCommand)
+        case .fn: Int64(kVK_Function)
+        }
+    }
+
+    /// The flag bit that is set while this particular key is down.
+    private var downBit: UInt64 {
+        switch key {
+        case .rightOption: 0x40 // NX_DEVICERALTKEYMASK
+        case .rightCommand: 0x10 // NX_DEVICERCMDKEYMASK
+        case .fn: CGEventFlags.maskSecondaryFn.rawValue
+        }
+    }
 
     /// Fails until Input Monitoring is granted.
     func start() -> Bool {
@@ -51,7 +71,7 @@ final class HotkeyMonitor {
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
         case .flagsChanged:
             guard keyCode == self.keyCode else { return }
-            let down = flags & Self.rightOptionBit != 0
+            let down = flags & downBit != 0
             guard down != isHeld else { return }
             isHeld = down
             onSignal?(down ? .down : .up, now)

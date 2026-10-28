@@ -20,6 +20,7 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin_dir/Sotto" "$app/Contents/MacOS/Sotto"
 cp Resources/Info.plist "$app/Contents/Info.plist"
+cp THIRD_PARTY_NOTICES.md "$app/Contents/Resources/"
 
 identity="${SOTTO_SIGN_IDENTITY:-}"
 if [[ -z "$identity" ]]; then

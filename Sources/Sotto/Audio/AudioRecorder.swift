@@ -20,11 +20,16 @@ final class AudioRecorder {
     func start(
         onFirstAudio: @escaping @Sendable () -> Void,
         onLevel: @escaping @Sendable (Float) -> Void,
-        onAudio: @escaping @Sendable ([Float]) -> Void
+        onAudio: @escaping @Sendable ([Float]) -> Void,
+        deviceUID: String? = nil
     ) throws {
         _ = stop()
         let engine = AVAudioEngine()
         let input = engine.inputNode
+        // A chosen mic that's unplugged falls back to the system default.
+        if let deviceUID, let unit = input.audioUnit {
+            AudioDevices.select(uid: deviceUID, on: unit)
+        }
         let inputFormat = input.outputFormat(forBus: 0)
         guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else { throw RecorderError.noInputDevice }
         guard let target = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16_000, channels: 1, interleaved: false),

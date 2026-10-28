@@ -1,4 +1,5 @@
 import AppKit
+import SottoCore
 import SwiftUI
 
 enum PillState: Equatable {
@@ -13,6 +14,7 @@ enum PillState: Equatable {
 @Observable @MainActor
 final class PillModel {
     var state: PillState = .hidden
+    var keySymbol = "⌥"
     /// Recent mic levels, oldest first, each 0...1.
     var levels: [Float] = Array(repeating: 0, count: PillModel.barCount)
     static let barCount = 9
@@ -30,10 +32,16 @@ final class PillModel {
 /// when hidden, so nothing renders between dictations.
 @MainActor
 final class PillController {
+    var position = PillPosition.bottom
+    var keySymbol: String {
+        get { model.keySymbol }
+        set { model.keySymbol = newValue }
+    }
+
     private let panel: NSPanel
     private let model = PillModel()
     private var messageGeneration = 0
-    private static let size = NSSize(width: 280, height: 64)
+    private static let size = NSSize(width: 360, height: 72)
 
     init() {
         panel = NSPanel(
@@ -56,11 +64,11 @@ final class PillController {
         guard model.state != state else { return }
         messageGeneration += 1
         model.state = state
-        if case .listening = state {} else if case .gettingReady = state {} else {
+        if !Self.isListening(state) {
             model.levels = Array(repeating: 0, count: PillModel.barCount)
         }
         if !panel.isVisible {
-            position()
+            position(on: NSScreen.main ?? NSScreen.screens.first)
             panel.orderFrontRegardless()
         }
     }
@@ -70,7 +78,7 @@ final class PillController {
         show(.message(text, isError: isError))
         let generation = messageGeneration
         Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(isError ? 2.5 : 1.2))
+            try? await Task.sleep(for: .seconds(isError ? 3 : 1.4))
             guard let self, self.messageGeneration == generation else { return }
             self.hide()
         }
@@ -82,18 +90,19 @@ final class PillController {
         panel.orderOut(nil)
     }
 
-    var isShowingMessage: Bool {
-        if case .message = model.state { return true }
-        return false
-    }
-
     func push(level: Float) {
         model.push(level: level)
     }
 
-    private func position() {
-        let screen = NSScreen.main ?? NSScreen.screens.first
+    private static func isListening(_ state: PillState) -> Bool {
+        if case .listening = state { return true }
+        return state == .gettingReady
+    }
+
+    private func position(on screen: NSScreen?) {
         guard let frame = screen?.visibleFrame else { return }
-        panel.setFrameOrigin(NSPoint(x: frame.midX - Self.size.width / 2, y: frame.minY + 24))
+        let x = frame.midX - Self.size.width / 2
+        let y = position == .bottom ? frame.minY + 20 : frame.maxY - Self.size.height - 12
+        panel.setFrameOrigin(NSPoint(x: x, y: y))
     }
 }
