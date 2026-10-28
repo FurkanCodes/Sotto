@@ -55,9 +55,44 @@ actor HelperEngine: SpeechEngine {
         return text ?? ""
     }
 
-    func warmUp() async {
-        _ = try? await transcribe([Float](repeating: 0, count: 16_000))
+    /// Starts a live stream, for models built to stream. `id` tags it.
+    func beginStream(id: Int) async throws {
+        try await load()
+        let language = self.language
+        let vocabulary = self.vocabulary
+        let error: String? = try await call { proxy, done in
+            proxy.streamBegin(id: id, language: language, vocabulary: vocabulary) { done(.success($0)) }
+        }
+        if let error { throw HelperError.failed(error) }
     }
+
+    /// Feeds audio to the stream and returns its text so far.
+    func feedStream(id: Int, _ samples: [Float]) async throws -> String? {
+        let data = samples.withUnsafeBufferPointer { Data(buffer: $0) }
+        let (text, error): (String?, String?) = try await call { proxy, done in
+            proxy.streamFeed(id: id, samples: data) { done(.success(($0, $1))) }
+        }
+        if let error { throw HelperError.failed(error) }
+        return text
+    }
+
+    func finishStream(id: Int) async throws -> String {
+        let (text, error): (String?, String?) = try await call { proxy, done in
+            proxy.streamFinish(id: id) { done(.success(($0, $1))) }
+        }
+        if let error { throw HelperError.failed(error) }
+        return text ?? ""
+    }
+
+    func cancelStream(id: Int) {
+        guard connection != nil else { return }
+        proxy(onError: { _ in })?.streamCancel(id: id)
+    }
+
+    /// Does nothing: on the GPU a loaded model's first run is only 15–50 ms
+    /// slower (docs/measurements.md), and a warm-up run would end a live
+    /// stream that has just started.
+    func warmUp() async {}
 
     /// Ends the helper process, which gives back all of the model's memory.
     func unload() async {

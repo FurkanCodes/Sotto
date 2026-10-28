@@ -82,7 +82,7 @@ final class DictationController {
     @ObservationIgnored private var signpostState: OSSignpostIntervalState?
     /// The dictation being transcribed while the user talks, and the
     /// in-order stream of audio that feeds it.
-    @ObservationIgnored private var live: LiveTranscriber?
+    @ObservationIgnored private var live: (any LiveTranscribing)?
     @ObservationIgnored private var liveInput: AsyncStream<[Float]>.Continuation?
     @ObservationIgnored private var liveFeed: Task<Void, Never>?
     /// What happened in the dictation in flight, for messages and sending.
@@ -113,7 +113,7 @@ final class DictationController {
         guard let model = catalogModel, let path = models.path(for: model) else { return }
         await helper.configure(
             modelPath: path.path,
-            language: model.isMultilingual ? settings.modelLanguage : nil,
+            language: model.isMultilingual ? settings.modelLanguage.flatMap(model.languageTag) : nil,
             vocabulary: settings.customWords
         )
     }
@@ -371,8 +371,15 @@ final class DictationController {
             }
         }
 
-        let live = LiveTranscriber(engine: engine, voice: voice) { [weak self] text in
-            Task { @MainActor in self?.addLiveText(text, session: session) }
+        let live: any LiveTranscribing
+        if catalogModel?.streams == true {
+            live = StreamingTranscriber(engine: helper, voice: voice, id: session) { [weak self] text in
+                Task { @MainActor in self?.showLiveText(text, session: session) }
+            }
+        } else {
+            live = LiveTranscriber(engine: engine, voice: voice) { [weak self] text in
+                Task { @MainActor in self?.addLiveText(text, session: session) }
+            }
         }
         let (stream, input) = AsyncStream.makeStream(of: [Float].self)
         self.live = live
@@ -455,13 +462,21 @@ final class DictationController {
             await liveFeed.value
             do {
                 let result = try await live.finish(fullAudio: samples)
-                self.breakdown = String(
-                    format: "%.1f s audio · %d pieces done while talking · %.1f s tail · key-up to work %d ms (mic close %d) · detection %d ms · waiting for pieces %d ms · tail transcription %d ms%@",
-                    Double(samples.count) / 16_000, result.piecesWhileTalking, result.tailSeconds,
-                    Int((waitedToStart * 1000).rounded()), Self.milliseconds(micCloseTime),
-                    Self.milliseconds(result.detectAfterRelease), Self.milliseconds(result.waitForPieces),
-                    Self.milliseconds(result.transcribeTail), result.usedFallback ? " · whole-recording fallback" : ""
-                )
+                if result.streamed {
+                    self.breakdown = String(
+                        format: "%.1f s audio · streamed · key-up to work %d ms (mic close %d) · finishing the stream %d ms",
+                        Double(samples.count) / 16_000, Int((waitedToStart * 1000).rounded()),
+                        Self.milliseconds(micCloseTime), Self.milliseconds(result.transcribeTail)
+                    )
+                } else {
+                    self.breakdown = String(
+                        format: "%.1f s audio · %d pieces done while talking · %.1f s tail · key-up to work %d ms (mic close %d) · detection %d ms · waiting for pieces %d ms · tail transcription %d ms%@",
+                        Double(samples.count) / 16_000, result.piecesWhileTalking, result.tailSeconds,
+                        Int((waitedToStart * 1000).rounded()), Self.milliseconds(micCloseTime),
+                        Self.milliseconds(result.detectAfterRelease), Self.milliseconds(result.waitForPieces),
+                        Self.milliseconds(result.transcribeTail), result.usedFallback ? " · whole-recording fallback" : ""
+                    )
+                }
                 let cleaned = TextCleanup.clean(result.text, removeFillers: cleanup.removeFillers, customWords: cleanup.words)
                 let corrected = cleanup.corrections ? SelfCorrection.apply(cleaned) : cleaned
                 // Style first, so replacements and snippets come out exactly as written.
@@ -554,6 +569,13 @@ final class DictationController {
         guard machine.currentSession == session, settings.showLiveText else { return }
         let piece = TextCleanup.clean(text, removeFillers: settings.removeFillerWords, customWords: settings.customWords)
         liveText = liveText.isEmpty ? piece : liveText + " " + piece
+        pill.setLiveText(liveText)
+    }
+
+    /// A stream's whole text so far, which replaces the caption.
+    private func showLiveText(_ text: String, session: Int) {
+        guard machine.currentSession == session, settings.showLiveText else { return }
+        liveText = TextCleanup.clean(text, removeFillers: settings.removeFillerWords, customWords: settings.customWords)
         pill.setLiveText(liveText)
     }
 

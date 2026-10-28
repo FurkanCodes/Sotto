@@ -46,7 +46,7 @@ Plugins get their own design. Buffer will be one plugin. The items below are ide
 
 - [x] 28. **Whisper Large v3 Turbo:** Turkish and about 100 languages. All 73 speech models in Handy's catalog can be downloaded in Settings → Models and run in the SottoEngine helper (transcribe.cpp). Tested with Whisper Small on Turkish; Turbo uses the same path but hasn't been run yet.
 - [x] 29. **Language switch,** or automatic, for multilingual models.
-- [~] 30. **Nemotron and Parakeet Unified:** both run, cut into pieces at pauses like Parakeet v3. Still to do: their own streaming mode, which transcribes during speech that never pauses.
+- [x] 30. **Nemotron and Parakeet Unified:** they stream: the helper transcribes while you talk, so the wait after release stays under 0.2 s however long you talk, pauses or not, and the caption updates about once a second. Nemotron's Turkish is weak (it garbled about a third of the words of the test sentence); Whisper does far better.
 - [ ] 31. **Translate any language to English.** transcribe.cpp supports it, but none of the catalog's models declare it (Whisper Turbo can't translate).
 - [ ] 32. **Intel Mac support.**
 

@@ -50,6 +50,24 @@ struct CatalogModel: Decodable, Identifiable, Hashable, Sendable {
 
     var isMultilingual: Bool { Set(languages.map { $0.prefix(2) }).count > 1 }
 
+    /// Built to transcribe as audio arrives, and measured in Sotto: the
+    /// Parakeet family (Nemotron, Parakeet Unified). Moonshine's streaming
+    /// decodes the whole recording again on every feed, and Voxtral Realtime
+    /// hasn't been measured, so those still use pause-cut pieces.
+    var streams: Bool { (capabilities?.streaming ?? false) && family == "parakeet" }
+
+    /// The model's own tag for a language code: "tr" is "tr-TR" for
+    /// Nemotron, which rejects plain "tr", and stays "tr" for Whisper.
+    func languageTag(for code: String) -> String? {
+        languages.first { $0 == code } ?? languages.first { $0.hasPrefix(code + "-") }
+    }
+
+    /// The catalog model a downloaded file belongs to.
+    static func model(forFile path: String) -> CatalogModel? {
+        let name = URL(fileURLWithPath: path).lastPathComponent
+        return ModelCatalog.models.first { $0.files.values.contains { $0.filename == name } }
+    }
+
     var familyTitle: String {
         switch family {
         case "parakeet": "Parakeet and Nemotron"

@@ -16,7 +16,7 @@ import FluidAudio
 ///
 /// If voice detection isn't loaded or fails, `finish` falls back to
 /// transcribing the whole recording at once.
-actor LiveTranscriber {
+actor LiveTranscriber: LiveTranscribing {
     struct Result {
         let text: String
         /// Pieces transcribed while the user was talking.
@@ -28,6 +28,8 @@ actor LiveTranscriber {
         let waitForPieces: Duration
         let transcribeTail: Duration
         let usedFallback: Bool
+        /// Transcribed as a live stream (StreamingTranscriber), not in pieces.
+        var streamed = false
     }
 
     private static let window = VoiceDetector.windowSize

@@ -103,3 +103,24 @@ Whisper Small got the Turkish sentence exactly right, with and without `--langua
 **No warm-up for the helper:** after the first load, a fresh helper's first transcription is only 15–50 ms slower than the rest. The one-time Metal compile happens in `prepareModel` at launch or when switching models.
 
 **App size:** 20 MB with the helper (Sotto 12 MB, SottoEngine 8.1 MB). `strip -x` in release builds brings it to 15 MB (`du -sh build/Sotto.app`); the signature verifies and both engines still transcribe.
+
+## 2026-10-28: Streaming (Nemotron, Parakeet Unified)
+
+`Sotto --transcribe-file <clip> --model <gguf> --live --repeat 2 [--pieces]`: the clip is fed in at real-time speed in 64 ms chunks, sent to the helper in batches of at least 256 ms. Times are from the last chunk ("release") to the final text. `--pieces` uses the pause-cut pieces instead, for comparison. Q8_0 models, Metal.
+
+| Model | Clip | Streaming | Pieces | First caption, streaming | First caption, pieces |
+|---|---|---|---|---|---|
+| Nemotron 3.5, `--language en` | short, 4.6 s | 29–36 ms | 66–126 ms | 1.3 s | 4.2 s |
+| Nemotron 3.5 | medium, 15.4 s, no pauses | 69–102 ms¹ | 325–390 ms | 1.1 s | at release |
+| Nemotron 3.5 | long, 45.8 s, no pauses | 78–79 ms | 861–1054 ms | 1.3 s | at release |
+| Nemotron 3.5 | paused, 35.7 s | 77–81 ms¹ | 145–156 ms | 1.1 s | 8.9 s |
+| Parakeet Unified | short, 4.6 s | 98–100 ms | | 2.3 s | |
+| Parakeet Unified | long, 45.8 s, no pauses | 170–177 ms | 480–598 ms | 2.3 s | at release |
+
+¹ Measured before batching, with one helper message per 64 ms chunk.
+
+**Text:** streaming and pieces gave the same text on short, medium and long. On paused they differed by two punctuation marks, one better each way.
+
+**Turkish:** Nemotron needs "tr-TR"; Sotto now maps the setting's "tr" to the model's own tag. The Yelda clip came out as "Medaba yarın sağa tüçte toplantımız var rütfen sunumu Mehmete gönder ve bınaha ber ver.", against Whisper Small's exact transcript.
+
+**Only the Parakeet family streams.** Moonshine's streaming decodes the whole recording again on every feed, and Voxtral Realtime hasn't been measured; both still use pieces.

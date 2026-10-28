@@ -44,11 +44,15 @@ enum HeadlessCheck {
         let samples = try await MediaReader.samples(from: URL(fileURLWithPath: path))
         let clock = ContinuousClock()
         let engine: any SpeechEngine
+        var streams = false
         if let index = CommandLine.arguments.firstIndex(of: "--model"), index + 1 < CommandLine.arguments.count {
             let helper = HelperEngine()
+            let path = CommandLine.arguments[index + 1]
+            let model = CatalogModel.model(forFile: path)
             let language = CommandLine.arguments.firstIndex(of: "--language").flatMap { CommandLine.arguments[safe: $0 + 1] }
-            await helper.configure(modelPath: CommandLine.arguments[index + 1], language: language, vocabulary: [])
+            await helper.configure(modelPath: path, language: language.map { model?.languageTag(for: $0) ?? $0 }, vocabulary: [])
             engine = helper
+            streams = model?.streams == true && !CommandLine.arguments.contains("--pieces")
         } else {
             engine = ParakeetEngine()
         }
@@ -60,7 +64,7 @@ enum HeadlessCheck {
         }
 
         if CommandLine.arguments.contains("--live") {
-            try await runLive(samples: samples, engine: engine, voice: voice, repeats: repeats)
+            try await runLive(samples: samples, engine: engine, voice: voice, repeats: repeats, streams: streams)
             return
         }
 
@@ -102,12 +106,19 @@ enum HeadlessCheck {
 
     /// `--live`: feeds the file in at real-time speed, in 64 ms chunks like
     /// the mic, then measures the time from "release" to the final text.
-    private static func runLive(samples: [Float], engine: any SpeechEngine, voice: VoiceDetector, repeats: Int) async throws {
+    /// Streaming models stream, unless `--pieces` asks for pause-cut pieces.
+    private static func runLive(samples: [Float], engine: any SpeechEngine, voice: VoiceDetector, repeats: Int, streams: Bool) async throws {
         let clock = ContinuousClock()
         let chunk = 1024
         var runs: [[String: Any]] = []
-        for _ in 0..<max(1, repeats) {
-            let live = LiveTranscriber(engine: engine, voice: voice)
+        for run in 0..<max(1, repeats) {
+            let captions = Captions()
+            let live: any LiveTranscribing
+            if streams, let helper = engine as? HelperEngine {
+                live = StreamingTranscriber(engine: helper, voice: voice, id: run) { _ in captions.count() }
+            } else {
+                live = LiveTranscriber(engine: engine, voice: voice) { _ in captions.count() }
+            }
             var offset = 0
             let start = clock.now
             while offset < samples.count {
@@ -124,6 +135,9 @@ enum HeadlessCheck {
                 "pieces_while_talking": result.piecesWhileTalking,
                 "tail_seconds": (result.tailSeconds * 10).rounded() / 10,
                 "fallback": result.usedFallback,
+                "streamed": result.streamed,
+                "caption_updates": captions.value,
+                "first_caption_ms": captions.first.map { milliseconds($0 - start) } ?? -1,
                 "text": TextCleanup.clean(result.text),
             ])
         }
@@ -133,6 +147,23 @@ enum HeadlessCheck {
 
     private static func milliseconds(_ duration: Duration) -> Int {
         Int((Double(duration.components.attoseconds) / 1e15 + Double(duration.components.seconds) * 1000).rounded())
+    }
+}
+
+/// Counts live-caption updates, from whichever thread they arrive on.
+private final class Captions: @unchecked Sendable {
+    private let lock = NSLock()
+    private var updates = 0
+    private var firstAt: ContinuousClock.Instant?
+
+    var value: Int { lock.withLock { updates } }
+    var first: ContinuousClock.Instant? { lock.withLock { firstAt } }
+
+    func count() {
+        lock.withLock {
+            updates += 1
+            if firstAt == nil { firstAt = .now }
+        }
     }
 }
 
