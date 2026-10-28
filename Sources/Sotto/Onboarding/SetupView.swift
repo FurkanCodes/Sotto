@@ -17,6 +17,8 @@ struct SetupView: View {
 
     private var modelDone: Bool { controller.isModelDownloaded && !controller.isPreparing }
     private var allDone: Bool { Permission.missing.isEmpty && modelDone }
+    /// The first permission still missing. Only its button is blue, as in the design.
+    private var currentPermission: Permission? { Permission.allCases.first { !$0.isGranted } }
 
     private var content: some View {
         let key = controller.store.settings.dictationKey
@@ -68,13 +70,18 @@ struct SetupView: View {
         StepRow(number: number, title: permission.title, detail: detail, done: permission.isGranted) {
             if permission.isGranted {
                 Text("Allowed").font(.callout.weight(.semibold)).foregroundStyle(.green)
+            } else if permission == currentPermission {
+                Button("Open System Settings") { open(permission) }
+                    .buttonStyle(.borderedProminent)
             } else {
-                Button("Open System Settings") {
-                    Task { await permission.request() }
-                    controller.retrySetup()
-                }
+                Button("Open System Settings") { open(permission) }
             }
         }
+    }
+
+    private func open(_ permission: Permission) {
+        Task { await permission.request() }
+        controller.retrySetup()
     }
 
     private var modelRow: some View {

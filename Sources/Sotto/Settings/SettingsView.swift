@@ -42,7 +42,7 @@ struct SettingsView: View {
         } detail: {
             Group {
                 switch pane ?? .general {
-                case .general: GeneralPane(store: controller.store)
+                case .general: GeneralPane(store: controller.store) { pane = .shortcut }
                 case .shortcut: ShortcutPane(store: controller.store)
                 case .models: ModelsPane(controller: controller, store: controller.store)
                 case .dictionary: DictionaryPane(store: controller.store)
@@ -60,12 +60,19 @@ struct SettingsView: View {
 
 private struct GeneralPane: View {
     @Bindable var store: SettingsStore
+    let changeKey: () -> Void
     @State private var launchAtLogin = LoginItem.isEnabled
     @State private var inputs = AudioDevices.inputs()
 
     var body: some View {
         Form {
             Section("Dictation") {
+                LabeledContent("Dictation key") {
+                    HStack(spacing: 8) {
+                        Keycap(store.settings.dictationKey.keycapLabel)
+                        Button("Change…", action: changeKey)
+                    }
+                }
                 Toggle(isOn: $store.settings.tapToKeepListening) {
                     Text("Tap to keep listening")
                     Text("A quick tap starts hands-free mode. Tap again to finish.")
@@ -106,6 +113,22 @@ private struct GeneralPane: View {
             PrivacyFooter()
         }
         .formStyle(.grouped)
+    }
+}
+
+/// A key drawn like a physical keycap, as in the design.
+struct Keycap: View {
+    let label: String
+    init(_ label: String) { self.label = label }
+
+    var body: some View {
+        Text(label)
+            .font(.system(size: 12, weight: .semibold))
+            .padding(.horizontal, 9)
+            .padding(.vertical, 4)
+            .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.separator))
+            .accessibilityLabel("Key: \(label)")
     }
 }
 
@@ -176,13 +199,14 @@ private struct ModelsPane: View {
                         Text("NVIDIA · 25 languages, detected automatically · runs on the Neural Engine to save battery")
                             .font(.callout)
                             .foregroundStyle(.secondary)
+                        Text(controller.modelReady ? "Loaded and ready." : "Not loaded right now. It loads while you start talking.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    if controller.modelReady {
-                        Label("Loaded", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
-                    } else {
-                        Label("Not loaded", systemImage: "moon").foregroundStyle(.secondary)
-                    }
+                    Label("Default", systemImage: "checkmark")
+                        .font(.callout.weight(.semibold))
+                        .foregroundStyle(.green)
                 }
                 LabeledContent("Size on disk", value: sizeOnDisk ?? "…")
                 Picker(selection: $store.settings.unloadAfterMinutes) {
@@ -301,8 +325,9 @@ private struct PrivacyPane: View {
 
 // MARK: - About
 
+/// The license notices stay in the app bundle (THIRD_PARTY_NOTICES.md), as
+/// the MIT and Apache licenses require, but aren't shown here.
 private struct AboutPane: View {
-    @State private var showingAcknowledgements = false
     private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "development build"
 
     var body: some View {
@@ -311,33 +336,8 @@ private struct AboutPane: View {
             Text("Sotto").font(.system(size: 34, weight: .semibold))
             Text("Version \(version)").foregroundStyle(.secondary)
             Text("Offline voice dictation for macOS.")
-            Button("Acknowledgements") { showingAcknowledgements = true }
-                .padding(.top, 8)
             Spacer()
         }
         .frame(maxWidth: .infinity)
-        .sheet(isPresented: $showingAcknowledgements) {
-            VStack(alignment: .trailing, spacing: 0) {
-                ScrollView {
-                    Text(Self.acknowledgements)
-                        .font(.system(.callout, design: .monospaced))
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(20)
-                }
-                Divider()
-                Button("Done") { showingAcknowledgements = false }
-                    .keyboardShortcut(.defaultAction)
-                    .padding(12)
-            }
-            .frame(width: 600, height: 480)
-        }
-    }
-
-    private static var acknowledgements: String {
-        guard let url = Bundle.main.url(forResource: "THIRD_PARTY_NOTICES", withExtension: "md"),
-              let text = try? String(contentsOf: url, encoding: .utf8)
-        else { return "Handy (MIT), FluidAudio (Apache 2.0), Parakeet TDT 0.6B v3 by NVIDIA (CC-BY-4.0), Silero VAD (MIT)." }
-        return text
     }
 }

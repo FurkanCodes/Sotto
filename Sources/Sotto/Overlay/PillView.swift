@@ -127,9 +127,23 @@ private struct Dots: View {
     }
 }
 
+/// The loading arc from the design: a quarter arc turning on a faint ring.
 private struct Spinner: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
-        ProgressView().controlSize(.small).accessibilityHidden(true)
+        TimelineView(.animation(paused: reduceMotion)) { context in
+            let turns = reduceMotion ? 0 : context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1)
+            ZStack {
+                Circle().stroke(.primary.opacity(0.18), lineWidth: 2)
+                Circle()
+                    .trim(from: 0, to: 0.25)
+                    .stroke(.tint, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .rotationEffect(.degrees(turns * 360))
+            }
+            .frame(width: 13, height: 13)
+        }
+        .accessibilityHidden(true)
     }
 }
 

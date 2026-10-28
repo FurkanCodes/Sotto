@@ -30,8 +30,26 @@ final class DictationController {
     private(set) var isPreparing = false
     private(set) var modelReady = false
     private(set) var last: LastDictation?
-    var isPaused = false {
+    private(set) var isPaused = false {
         didSet { onChange?() }
+    }
+    @ObservationIgnored private var resumeTask: Task<Void, Never>?
+
+    /// Turns dictation off, for `minutes` or until `resume()`.
+    func pause(minutes: Int?) {
+        resumeTask?.cancel()
+        isPaused = true
+        guard let minutes else { return }
+        resumeTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(minutes * 60))
+            guard !Task.isCancelled else { return }
+            self?.isPaused = false
+        }
+    }
+
+    func resume() {
+        resumeTask?.cancel()
+        isPaused = false
     }
 
     @ObservationIgnored var onChange: (() -> Void)?

@@ -42,6 +42,15 @@ extension DictationKey {
         }
     }
 
+    /// How the key appears on its keycap in Settings.
+    var keycapLabel: String {
+        switch self {
+        case .rightOption: "Right ⌥"
+        case .rightCommand: "Right ⌘"
+        case .fn: "fn 🌐"
+        }
+    }
+
     var symbol: String {
         switch self {
         case .rightOption: "⌥"
