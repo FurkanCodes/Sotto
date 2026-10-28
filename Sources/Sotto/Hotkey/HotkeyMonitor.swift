@@ -24,6 +24,9 @@ final class HotkeyMonitor {
     var key = DictationKey.rightOption {
         didSet { isHeld = false }
     }
+    /// A mouse button that acts like the dictation key (CGEvent numbering:
+    /// 2 middle, 3 back, 4 forward), or nil.
+    var mouseButton: Int?
 
     private var tap: CFMachPort?
     private(set) var isHeld = false {
@@ -71,7 +74,10 @@ final class HotkeyMonitor {
     /// Fails until Input Monitoring is granted.
     func start() -> Bool {
         guard tap == nil else { return true }
-        let mask = CGEventMask(1 << CGEventType.flagsChanged.rawValue) | CGEventMask(1 << CGEventType.keyDown.rawValue)
+        let mask = CGEventMask(1 << CGEventType.flagsChanged.rawValue)
+            | CGEventMask(1 << CGEventType.keyDown.rawValue)
+            | CGEventMask(1 << CGEventType.otherMouseDown.rawValue)
+            | CGEventMask(1 << CGEventType.otherMouseUp.rawValue)
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
             place: .headInsertEventTap,
@@ -87,9 +93,15 @@ final class HotkeyMonitor {
         return true
     }
 
-    fileprivate func handle(type: CGEventType, keyCode: Int64, flags: UInt64) {
+    fileprivate func handle(type: CGEventType, keyCode: Int64, flags: UInt64, mouseButton: Int64) {
         let now = ProcessInfo.processInfo.systemUptime
         switch type {
+        case .otherMouseDown, .otherMouseUp:
+            guard let button = self.mouseButton, Int64(button) == mouseButton else { return }
+            let down = type == .otherMouseDown
+            guard down != isHeld else { return }
+            isHeld = down
+            onSignal?(down ? .down : .up, now)
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
         case .flagsChanged:
@@ -119,10 +131,11 @@ private func hotkeyTapCallback(
     guard let userInfo else { return Unmanaged.passUnretained(event) }
     let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
     let flags = event.flags.rawValue
+    let mouseButton = event.getIntegerValueField(.mouseEventButtonNumber)
     let monitor = Unmanaged<HotkeyMonitor>.fromOpaque(userInfo).takeUnretainedValue()
     // The tap's run loop source is on the main run loop.
     MainActor.assumeIsolated {
-        monitor.handle(type: type, keyCode: keyCode, flags: flags)
+        monitor.handle(type: type, keyCode: keyCode, flags: flags, mouseButton: mouseButton)
     }
     return Unmanaged.passUnretained(event)
 }

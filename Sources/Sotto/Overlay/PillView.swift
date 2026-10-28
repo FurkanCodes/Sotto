@@ -7,19 +7,54 @@ struct PillView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack {
-            if model.state != .hidden {
-                content
-                    .padding(.leading, 16)
-                    .padding(.trailing, 18)
-                    .frame(height: 46)
-                    .modifier(PillBackground(reduceTransparency: reduceTransparency))
-                    .shadow(color: .black.opacity(reduceTransparency ? 0.15 : 0), radius: 8, y: 3)
-                    .transition(reduceMotion ? .opacity : .scale(scale: 0.92).combined(with: .opacity))
+        VStack(spacing: 8) {
+            if model.atTop { pill }
+            if showsCaption {
+                Text(Self.tail(of: model.liveText))
+                    .font(.system(size: 13))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: 480)
+                    .modifier(CaptionBackground(reduceTransparency: reduceTransparency))
+                    .transition(.opacity)
             }
+            if !model.atTop { pill }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(12)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: model.atTop ? .top : .bottom)
         .animation(reduceMotion ? nil : .spring(response: 0.26, dampingFraction: 0.85), value: model.state)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.liveText)
+    }
+
+    @ViewBuilder
+    private var pill: some View {
+        if model.state != .hidden {
+            content
+                .padding(.leading, 16)
+                .padding(.trailing, 18)
+                .frame(height: 46)
+                .modifier(PillBackground(reduceTransparency: reduceTransparency))
+                .shadow(color: .black.opacity(reduceTransparency ? 0.15 : 0), radius: 8, y: 3)
+                .transition(reduceMotion ? .opacity : .scale(scale: 0.92).combined(with: .opacity))
+        }
+    }
+
+    private var showsCaption: Bool {
+        guard !model.liveText.isEmpty else { return false }
+        switch model.state {
+        case .listening, .transcribing, .loadingModel: return true
+        default: return false
+        }
+    }
+
+    /// The last ~110 characters, starting at a word.
+    private static func tail(of text: String) -> String {
+        guard text.count > 110 else { return text }
+        let cut = text.suffix(110)
+        let start = cut.firstIndex(of: " ").map { cut.index(after: $0) } ?? cut.startIndex
+        return "…" + cut[start...]
     }
 
     @ViewBuilder
@@ -144,6 +179,20 @@ private struct Spinner: View {
             .frame(width: 13, height: 13)
         }
         .accessibilityHidden(true)
+    }
+}
+
+private struct CaptionBackground: ViewModifier {
+    let reduceTransparency: Bool
+
+    func body(content: Content) -> some View {
+        if reduceTransparency {
+            content
+                .background(RoundedRectangle(cornerRadius: 14).fill(Color(nsColor: .windowBackgroundColor)))
+                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(nsColor: .separatorColor)))
+        } else {
+            content.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+        }
     }
 }
 

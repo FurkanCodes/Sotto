@@ -33,7 +33,7 @@ enum HeadlessCheck {
     }
 
     private static func run(path: String, repeats: Int, gap: Double, warm: Bool, warmLead: Double = 2) async throws {
-        let samples = try AudioConverter().resampleAudioFile(path: path)
+        let samples = try await MediaReader.samples(from: URL(fileURLWithPath: path))
         let clock = ContinuousClock()
         let engine = ParakeetEngine()
         let voice = VoiceDetector()

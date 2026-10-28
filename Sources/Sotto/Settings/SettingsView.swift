@@ -81,6 +81,10 @@ private struct GeneralPane: View {
                     Text("Remove filler words")
                     Text("Takes out um, uh and hmm.")
                 }
+                Toggle(isOn: $store.settings.sayToSend) {
+                    Text("Say “send it” to press Return")
+                    Text("End a dictation with “send it” to send the message.")
+                }
                 LabeledContent {
                     Text("Detected automatically")
                 } label: {
@@ -90,6 +94,10 @@ private struct GeneralPane: View {
             }
             Section("Pill") {
                 Toggle("Show pill while dictating", isOn: $store.settings.showPill)
+                Toggle(isOn: $store.settings.showLiveText) {
+                    Text("Show text while dictating")
+                    Text("Finished sentences appear above the pill as you talk.")
+                }
                 Picker("Position", selection: $store.settings.pillPosition) {
                     Text("Bottom of the screen").tag(PillPosition.bottom)
                     Text("Top of the screen").tag(PillPosition.top)
@@ -97,6 +105,10 @@ private struct GeneralPane: View {
                 Toggle("Play sounds", isOn: $store.settings.playSounds)
             }
             Section("System") {
+                Toggle(isOn: $store.settings.lowerOtherAudio) {
+                    Text("Lower other audio while dictating")
+                    Text("Turns music and videos down while you talk, then back up.")
+                }
                 Toggle("Launch at login", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, enabled in
                         LoginItem.setEnabled(enabled)
@@ -110,9 +122,50 @@ private struct GeneralPane: View {
                     }
                 }
             }
+            Section {
+                ForEach($store.settings.autoSendApps) { $rule in
+                    HStack {
+                        Text(rule.app.name)
+                        Spacer()
+                        Picker("Key", selection: $rule.withCommand) {
+                            Text("Return").tag(false)
+                            Text("⌘ Return").tag(true)
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                        RemoveButton(name: rule.app.name) {
+                            store.settings.autoSendApps.removeAll { $0.id == rule.id }
+                        }
+                    }
+                }
+                Button("Add App…") {
+                    if let app = AppPicker.choose(), !store.settings.autoSendApps.contains(where: { $0.app == app }) {
+                        store.settings.autoSendApps.append(AutoSendRule(app: app))
+                    }
+                }
+            } header: {
+                Text("Always send")
+            } footer: {
+                Text("In these apps, Sotto presses Return after inserting your text, so messages send right away.")
+            }
             PrivacyFooter()
         }
         .formStyle(.grouped)
+    }
+}
+
+/// A small minus button for removing a row from a list.
+struct RemoveButton: View {
+    let name: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "minus.circle")
+        }
+        .buttonStyle(.borderless)
+        .help("Remove \(name)")
+        .accessibilityLabel("Remove \(name)")
     }
 }
 
@@ -159,6 +212,34 @@ private struct ShortcutPane: View {
                 .pickerStyle(.radioGroup)
             } footer: {
                 Text("A single key keeps working in password fields, where macOS blocks key combinations.")
+            }
+            Section {
+                Picker("Mouse button", selection: $store.settings.mouseButton) {
+                    Text("None").tag(Int?.none)
+                    Text("Middle button").tag(Int?.some(2))
+                    Text("Back button").tag(Int?.some(3))
+                    Text("Forward button").tag(Int?.some(4))
+                }
+            } footer: {
+                Text("The mouse button works like the dictation key: hold to talk, or click to keep listening.")
+            }
+            Section {
+                ForEach(store.settings.skipApps) { app in
+                    HStack {
+                        Text(app.name)
+                        Spacer()
+                        RemoveButton(name: app.name) { store.settings.skipApps.removeAll { $0 == app } }
+                    }
+                }
+                Button("Add App…") {
+                    if let app = AppPicker.choose(), !store.settings.skipApps.contains(app) {
+                        store.settings.skipApps.append(app)
+                    }
+                }
+            } header: {
+                Text("Apps to skip")
+            } footer: {
+                Text("The dictation key does nothing in these apps, such as games or password managers.")
             }
             Section("How it works") {
                 LabeledContent("Hold \(key.symbol)", value: "Talk, then let go to insert the text")
@@ -251,6 +332,11 @@ private struct ModelsPane: View {
 private struct DictionaryPane: View {
     @Bindable var store: SettingsStore
     @State private var newWord = ""
+    @State private var replaceFrom = ""
+    @State private var replaceTo = ""
+    @State private var snippetTrigger = ""
+    @State private var snippetText = ""
+    @State private var handyWords = HandyImport.customWords()
 
     private var trimmed: String { newWord.trimmingCharacters(in: .whitespacesAndNewlines) }
 
@@ -261,6 +347,14 @@ private struct DictionaryPane: View {
                     TextField("Add a name or term", text: $newWord)
                         .onSubmit(add)
                     Button("Add", action: add).disabled(trimmed.isEmpty)
+                }
+                if let handyWords, !handyWords.isEmpty {
+                    Button("Import \(handyWords.count) Words from Handy") {
+                        for word in handyWords where !store.settings.customWords.contains(where: { $0.caseInsensitiveCompare(word) == .orderedSame }) {
+                            store.settings.customWords.append(word)
+                        }
+                        self.handyWords = []
+                    }
                 }
             } header: {
                 Text("Custom words")
@@ -287,6 +381,60 @@ private struct DictionaryPane: View {
                     }
                 }
             }
+            Section {
+                HStack {
+                    TextField("When I say", text: $replaceFrom)
+                    Image(systemName: "arrow.right").foregroundStyle(.secondary)
+                    TextField("Write", text: $replaceTo)
+                    Button("Add") {
+                        let from = replaceFrom.trimmingCharacters(in: .whitespaces)
+                        guard !from.isEmpty else { return }
+                        store.settings.replacements.append(Replacement(from: from, to: replaceTo))
+                        replaceFrom = ""
+                        replaceTo = ""
+                    }
+                    .disabled(replaceFrom.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+                ForEach(store.settings.replacements, id: \.self) { rule in
+                    HStack {
+                        Text(rule.from)
+                        Image(systemName: "arrow.right").foregroundStyle(.secondary)
+                        Text(rule.to.isEmpty ? "(nothing)" : rule.to).foregroundStyle(rule.to.isEmpty ? .secondary : .primary)
+                        Spacer()
+                        RemoveButton(name: rule.from) { store.settings.replacements.removeAll { $0 == rule } }
+                    }
+                }
+            } header: {
+                Text("Replacements")
+            } footer: {
+                Text("Exact swaps, like “gee mail” → “Gmail” or “dot com” → “.com”.")
+            }
+            Section {
+                TextField("Trigger, like “my address”", text: $snippetTrigger)
+                TextField("Text to insert", text: $snippetText, axis: .vertical).lineLimit(2...6)
+                Button("Add Snippet") {
+                    let trigger = snippetTrigger.trimmingCharacters(in: .whitespaces)
+                    guard !trigger.isEmpty, !snippetText.isEmpty else { return }
+                    store.settings.snippets.append(Snippet(trigger: trigger, text: snippetText))
+                    snippetTrigger = ""
+                    snippetText = ""
+                }
+                .disabled(snippetTrigger.trimmingCharacters(in: .whitespaces).isEmpty || snippetText.isEmpty)
+                ForEach(store.settings.snippets, id: \.self) { snippet in
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(snippet.trigger).fontWeight(.medium)
+                            Text(snippet.text).font(.callout).foregroundStyle(.secondary).lineLimit(2)
+                        }
+                        Spacer()
+                        RemoveButton(name: snippet.trigger) { store.settings.snippets.removeAll { $0 == snippet } }
+                    }
+                }
+            } header: {
+                Text("Snippets")
+            } footer: {
+                Text("Say the trigger and Sotto types the text. Use {date}, {time} or {clipboard} inside it.")
+            }
         }
         .formStyle(.grouped)
     }
@@ -311,10 +459,19 @@ private struct PrivacyPane: View {
             Section {
                 Label("Speech is turned into text on this Mac, by its Neural Engine.", systemImage: "cpu")
                 Label("After the model download, Sotto makes no network connections.", systemImage: "network.slash")
-                Label("Only your last transcript is kept, in memory. It's gone when Sotto quits.", systemImage: "clock.arrow.circlepath")
+                Label("Your dictation history is stored only on this Mac, encrypted with your login.", systemImage: "clock.arrow.circlepath")
                 Label("No analytics, no crash reports, no account.", systemImage: "hand.raised")
             }
-            Section {
+            Section("History") {
+                Picker("Keep dictations", selection: Bindable(controller.store).settings.historyRetentionDays) {
+                    Text("Don't keep").tag(0)
+                    Text("For 1 day").tag(1)
+                    Text("For 7 days").tag(7)
+                    Text("For 30 days").tag(30)
+                    Text("Until I delete them").tag(-1)
+                }
+                Button("Clear History") { controller.history.clearUnstarred() }
+                    .disabled(controller.history.entries.allSatisfy(\.starred))
                 Button("Forget Last Transcript") { controller.forgetLastTranscript() }
                     .disabled(controller.last == nil)
             }

@@ -54,6 +54,7 @@ final class DictationController {
 
     @ObservationIgnored var onChange: (() -> Void)?
     @ObservationIgnored let store: SettingsStore
+    @ObservationIgnored let history: HistoryStore
     @ObservationIgnored private var machine = DictationMachine()
     @ObservationIgnored private let hotkey = HotkeyMonitor()
     @ObservationIgnored private let recorder = AudioRecorder()
@@ -77,9 +78,20 @@ final class DictationController {
     @ObservationIgnored private var live: LiveTranscriber?
     @ObservationIgnored private var liveInput: AsyncStream<[Float]>.Continuation?
     @ObservationIgnored private var liveFeed: Task<Void, Never>?
+    /// What happened in the dictation in flight, for messages and sending.
+    @ObservationIgnored private var recordingPeak: Float = 0
+    @ObservationIgnored private var liveText = ""
+    @ObservationIgnored private var pressReturnAfterInsert = false
 
-    init(store: SettingsStore) {
+    init(store: SettingsStore, history: HistoryStore) {
         self.store = store
+        self.history = history
+    }
+
+    /// The mic in use, for messages: "MacBook Pro Microphone".
+    private var microphoneName: String {
+        AudioDevices.inputs().first { $0.id == settings.microphoneUID }?.name
+            ?? AudioDevices.defaultInputName() ?? "the microphone"
     }
 
     private var settings: SottoSettings { store.settings }
@@ -103,6 +115,8 @@ final class DictationController {
 
     func start() {
         hotkey.key = settings.dictationKey
+        hotkey.mouseButton = settings.mouseButton
+        history.prune(retentionDays: settings.historyRetentionDays)
         hotkey.onSignal = { [weak self] signal, time in self?.handle(signal, at: time) }
         pill.position = settings.pillPosition
         pill.keySymbol = settings.dictationKey.symbol
@@ -117,6 +131,8 @@ final class DictationController {
 
     private func apply(_ settings: SottoSettings) {
         hotkey.key = settings.dictationKey
+        hotkey.mouseButton = settings.mouseButton
+        history.prune(retentionDays: settings.historyRetentionDays)
         pill.position = settings.pillPosition
         pill.keySymbol = settings.dictationKey.symbol
         if machine.phase == .idle, modelReady { scheduleUnload() }
@@ -137,6 +153,20 @@ final class DictationController {
                 try? await Task.sleep(for: .seconds(2))
             }
         }
+    }
+
+    /// Transcribes an audio or video file with the same models and cleanup
+    /// as dictation (but no snippets or sending).
+    func transcribeFile(_ url: URL) async throws -> String {
+        let samples = try await MediaReader.samples(from: url)
+        try await voice.load()
+        try await engine.load()
+        modelReady = true
+        defer { scheduleUnload() }
+        guard let speech = await voice.speech(in: samples), !speech.isEmpty else { return "" }
+        let raw = try await engine.transcribe(speech)
+        let cleaned = TextCleanup.clean(raw, removeFillers: settings.removeFillerWords, customWords: settings.customWords)
+        return TextRules.applyReplacements(cleaned, settings.replacements)
     }
 
     func forgetLastTranscript() {
@@ -200,7 +230,11 @@ final class DictationController {
         lastKeyEventAt = time
         switch signal {
         case .down:
-            guard !isPaused || machine.currentSession != nil else { return }
+            if machine.currentSession == nil {
+                guard !isPaused else { return }
+                if let app = NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
+                   settings.skipApps.contains(where: { $0.bundleID == app }) { return }
+            }
             machine.latchOnTap = settings.tapToKeepListening
             send(.hotkeyDown(at: time))
         case .up: send(.hotkeyUp(at: time))
@@ -229,12 +263,21 @@ final class DictationController {
             (live, liveInput, liveFeed) = (nil, nil, nil)
             endSignpost()
             pill.hide()
+            SystemVolume.restore()
             setStatus(.ready)
         case .insert(let text, let session):
             insert(text, session: session)
         case .reportEmpty:
             endSignpost()
-            pill.flash("Didn't catch that", isError: false)
+            if pressReturnAfterInsert {
+                // Just "send it": press Return for text typed earlier.
+                inserter.pressReturn(withCommand: autoSendRule()?.withCommand ?? false)
+                pill.hide()
+            } else if recordedSeconds > 1, recordingPeak < 0.0005 {
+                pill.flash("No sound from \(microphoneName). Is it muted?", isError: true)
+            } else {
+                pill.flash("Didn't catch that", isError: false)
+            }
             scheduleUnload()
         case .reportFailure(let message, _):
             endSignpost()
@@ -244,9 +287,20 @@ final class DictationController {
     }
 
     private func startCapture(_ session: Int) {
+        if !Permission.microphone.isGranted {
+            send(.failed(session: session, message: "Sotto can't use the microphone. Allow it from the menu."))
+            return
+        }
+        if !engine.isDownloaded {
+            send(.failed(session: session, message: "The speech model isn't downloaded yet."))
+            return
+        }
         unloadTask?.cancel()
         inserter.prepare()
         micReady = false
+        recordingPeak = 0
+        liveText = ""
+        pressReturnAfterInsert = false
         recordingStarted = Date()
         signpostState = Log.signposter.beginInterval("dictation", id: Log.signposter.makeSignpostID())
 
@@ -267,7 +321,9 @@ final class DictationController {
             }
         }
 
-        let live = LiveTranscriber(engine: engine, voice: voice)
+        let live = LiveTranscriber(engine: engine, voice: voice) { [weak self] text in
+            Task { @MainActor in self?.addLiveText(text, session: session) }
+        }
         let (stream, input) = AsyncStream.makeStream(of: [Float].self)
         self.live = live
         liveInput = input
@@ -281,14 +337,19 @@ final class DictationController {
                     Task { @MainActor in self?.micBecameReady(session) }
                 },
                 onLevel: { [weak self] level in
-                    Task { @MainActor in self?.pill.push(level: level) }
+                    Task { @MainActor in
+                        self?.pill.push(level: level)
+                        if let self, level > self.recordingPeak { self.recordingPeak = level }
+                    }
                 },
                 onAudio: { chunk in input.yield(chunk) },
                 deviceUID: settings.microphoneUID
             )
             setStatus(.listening)
+        } catch AudioRecorder.RecorderError.noInputDevice {
+            send(.failed(session: session, message: "No microphone found. Connect one or pick another in the menu."))
         } catch {
-            send(.failed(session: session, message: "Microphone unavailable"))
+            send(.failed(session: session, message: "Couldn't start \(microphoneName)."))
         }
     }
 
@@ -296,6 +357,15 @@ final class DictationController {
         guard machine.currentSession == session else { return }
         micReady = true
         if settings.playSounds { Sounds.playStart() }
+        if settings.lowerOtherAudio {
+            // After the start sound, so the sound itself isn't turned down.
+            let delay = settings.playSounds ? 200 : 0
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(delay))
+                guard let self, self.machine.currentSession == session else { return }
+                SystemVolume.lower()
+            }
+        }
         Log.signposter.emitEvent("mic ready")
         refreshPill()
     }
@@ -308,6 +378,7 @@ final class DictationController {
         let stopStart = clock.now
         let samples = recorder.stop()
         let micCloseTime = clock.now - stopStart
+        SystemVolume.restore()
         if settings.playSounds { Sounds.playStop() }
         setStatus(.ready)
         guard let live, let liveFeed else {
@@ -317,6 +388,10 @@ final class DictationController {
         liveInput?.finish()
         (self.live, liveInput, self.liveFeed) = (nil, nil, nil)
         let cleanup = (removeFillers: settings.removeFillerWords, words: settings.customWords)
+        let rules = (replacements: settings.replacements, snippets: settings.snippets, sayToSend: settings.sayToSend)
+        // Read now, before the paste replaces the clipboard.
+        let clipboard = rules.snippets.contains { $0.text.contains("{clipboard}") }
+            ? NSPasteboard.general.string(forType: .string) : nil
         Task {
             let interval = Log.signposter.beginInterval("transcribe")
             defer { Log.signposter.endInterval("transcribe", interval) }
@@ -332,8 +407,13 @@ final class DictationController {
                     Self.milliseconds(result.detectAfterRelease), Self.milliseconds(result.waitForPieces),
                     Self.milliseconds(result.transcribeTail), result.usedFallback ? " · whole-recording fallback" : ""
                 )
-                let text = TextCleanup.clean(result.text, removeFillers: cleanup.removeFillers, customWords: cleanup.words)
-                self.send(.transcribed(session: session, text: text))
+                let cleaned = TextCleanup.clean(result.text, removeFillers: cleanup.removeFillers, customWords: cleanup.words)
+                let final = TextRules.apply(
+                    cleaned, replacements: rules.replacements, snippets: rules.snippets,
+                    sayToSend: rules.sayToSend, clipboard: clipboard
+                )
+                self.pressReturnAfterInsert = final.send
+                self.send(.transcribed(session: session, text: final.text))
             } catch {
                 Log.app.error("Transcription failed: \(error.localizedDescription, privacy: .public)")
                 self.send(.failed(session: session, message: "Couldn't transcribe"))
@@ -356,6 +436,11 @@ final class DictationController {
             let target = appName ?? "unknown app"
             switch outcome {
             case .inserted(let method, let chordAt, let landedAt):
+                if pressReturnAfterInsert || autoSendRule() != nil {
+                    // A short pause, so the app has the text before Return arrives.
+                    try? await Task.sleep(for: .milliseconds(50))
+                    inserter.pressReturn(withCommand: autoSendRule()?.withCommand ?? false)
+                }
                 let toPaste = Int(((chordAt - releasedAt) * 1000).rounded())
                 let toLanded = Int(((landedAt - releasedAt) * 1000).rounded())
                 let pasteStep = Int(((chordAt - insertStart) * 1000).rounded())
@@ -371,6 +456,10 @@ final class DictationController {
                 Log.app.error("insert failed in \(target, privacy: .public): couldn't post keystrokes")
                 pill.flash("Couldn't paste. Check Accessibility.", isError: true)
             }
+            history.add(
+                HistoryEntry(text: text, date: Date(), appName: pasteMs == nil ? nil : appName, seconds: duration),
+                retentionDays: settings.historyRetentionDays
+            )
             last = LastDictation(
                 text: text, appName: pasteMs == nil ? nil : appName, duration: duration,
                 at: Date(), releaseToPasteMs: pasteMs, breakdown: breakdown
@@ -378,6 +467,19 @@ final class DictationController {
             onChange?()
             scheduleUnload()
         }
+    }
+
+    /// The auto-send rule for the app in front, if any.
+    private func autoSendRule() -> AutoSendRule? {
+        guard let app = NSWorkspace.shared.frontmostApplication?.bundleIdentifier else { return nil }
+        return settings.autoSendApps.first { $0.app.bundleID == app }
+    }
+
+    private func addLiveText(_ text: String, session: Int) {
+        guard machine.currentSession == session, settings.showLiveText else { return }
+        let piece = TextCleanup.clean(text, removeFillers: settings.removeFillerWords, customWords: settings.customWords)
+        liveText = liveText.isEmpty ? piece : liveText + " " + piece
+        pill.setLiveText(liveText)
     }
 
     private func endSignpost() {

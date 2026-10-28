@@ -8,12 +8,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let store = SettingsStore()
-        let controller = DictationController(store: store)
+        let controller = DictationController(store: store, history: HistoryStore())
         let statusMenu = StatusMenu(controller: controller)
         let windows = Windows(controller: controller)
         controller.onChange = { [weak statusMenu] in statusMenu?.refresh() }
         statusMenu.openSettings = { [weak windows] in windows?.showSettings() }
         statusMenu.openSetup = { [weak windows] in windows?.showSetup() }
+        statusMenu.openHistory = { [weak windows] in windows?.showHistory() }
+        statusMenu.openFileTranscription = { [weak windows] in windows?.showFileTranscription() }
         self.controller = controller
         self.statusMenu = statusMenu
         self.windows = windows

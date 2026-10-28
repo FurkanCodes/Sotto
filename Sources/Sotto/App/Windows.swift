@@ -8,6 +8,8 @@ final class Windows {
     private let controller: DictationController
     private var settings: NSWindow?
     private var setup: NSWindow?
+    private var history: NSWindow?
+    private var fileTranscription: NSWindow?
 
     init(controller: DictationController) {
         self.controller = controller
@@ -35,6 +37,29 @@ final class Windows {
             setup?.titlebarAppearsTransparent = true
         }
         present(setup)
+    }
+
+    func showHistory() {
+        if history == nil {
+            history = makeWindow(
+                title: "Sotto History",
+                root: HistoryView(history: controller.history, retentionDays: controller.store.settings.historyRetentionDays),
+                style: [.titled, .closable, .miniaturizable, .resizable]
+            ) { [weak self] in self?.history = nil }
+            history?.setContentSize(NSSize(width: 640, height: 600))
+        }
+        present(history)
+    }
+
+    func showFileTranscription() {
+        if fileTranscription == nil {
+            fileTranscription = makeWindow(
+                title: "Transcribe a File",
+                root: FileTranscriptionView(controller: controller),
+                style: [.titled, .closable, .miniaturizable, .resizable]
+            ) { [weak self] in self?.fileTranscription = nil }
+        }
+        present(fileTranscription)
     }
 
     private func makeWindow(title: String, root: some View, style: NSWindow.StyleMask, onClose: @escaping @MainActor () -> Void) -> NSWindow {

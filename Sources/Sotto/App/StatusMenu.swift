@@ -11,6 +11,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     private let menu = NSMenu()
     var openSettings: (() -> Void)?
     var openSetup: (() -> Void)?
+    var openHistory: (() -> Void)?
+    var openFileTranscription: (() -> Void)?
 
     init(controller: DictationController) {
         self.controller = controller
@@ -67,6 +69,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
+        menu.addItem(action("History…", key: "y", #selector(showHistory)))
+        menu.addItem(action("Transcribe a File…", key: "", #selector(showFileTranscription)))
         menu.addItem(action("Settings…", key: ",", #selector(showSettings)))
         menu.addItem(action("Quit Sotto", key: "q", #selector(quit)))
     }
@@ -162,6 +166,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     }
 
     @objc private func showSettings() { openSettings?() }
+    @objc private func showHistory() { openHistory?() }
+    @objc private func showFileTranscription() { openFileTranscription?() }
     @objc private func showSetup() { openSetup?() }
 
     @objc private func quit() {

@@ -144,6 +144,20 @@ final class TextInserter: NSObject {
         return outcome
     }
 
+    /// Presses Return, or ⌘Return, to send a message. Only called after the
+    /// text has landed, so Return never submits stale content (Handy paste_tx).
+    func pressReturn(withCommand: Bool) {
+        guard let source = CGEventSource(stateID: .hidSystemState),
+              let down = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_Return), keyDown: true),
+              let up = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_Return), keyDown: false)
+        else { return }
+        let flags: CGEventFlags = withCommand ? .maskCommand : []
+        down.flags = flags
+        up.flags = flags
+        down.post(tap: .cghidEventTap)
+        up.post(tap: .cghidEventTap)
+    }
+
     // MARK: - One at a time
 
     private func acquire() async {

@@ -15,6 +15,10 @@ enum PillState: Equatable {
 final class PillModel {
     var state: PillState = .hidden
     var keySymbol = "⌥"
+    /// Text transcribed so far in this dictation, shown above the pill.
+    var liveText = ""
+    /// The pill sits at the top of the screen, so the text goes below it.
+    var atTop = false
     /// Recent mic levels, oldest first, each 0...1.
     var levels: [Float] = Array(repeating: 0, count: PillModel.barCount)
     static let barCount = 9
@@ -32,7 +36,9 @@ final class PillModel {
 /// when hidden, so nothing renders between dictations.
 @MainActor
 final class PillController {
-    var position = PillPosition.bottom
+    var position = PillPosition.bottom {
+        didSet { model.atTop = position == .top }
+    }
     var keySymbol: String {
         get { model.keySymbol }
         set { model.keySymbol = newValue }
@@ -41,7 +47,7 @@ final class PillController {
     private let panel: NSPanel
     private let model = PillModel()
     private var messageGeneration = 0
-    private static let size = NSSize(width: 360, height: 72)
+    private static let size = NSSize(width: 560, height: 150)
 
     init() {
         panel = NSPanel(
@@ -84,9 +90,14 @@ final class PillController {
         }
     }
 
+    func setLiveText(_ text: String) {
+        model.liveText = text
+    }
+
     func hide() {
         messageGeneration += 1
         model.state = .hidden
+        model.liveText = ""
         panel.orderOut(nil)
     }
 
@@ -102,7 +113,7 @@ final class PillController {
     private func position(on screen: NSScreen?) {
         guard let frame = screen?.visibleFrame else { return }
         let x = frame.midX - Self.size.width / 2
-        let y = position == .bottom ? frame.minY + 20 : frame.maxY - Self.size.height - 12
+        let y = position == .bottom ? frame.minY + 8 : frame.maxY - Self.size.height
         panel.setFrameOrigin(NSPoint(x: x, y: y))
     }
 }

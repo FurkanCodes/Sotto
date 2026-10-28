@@ -41,6 +41,8 @@ actor LiveTranscriber {
 
     private let engine: ParakeetEngine
     private let voice: VoiceDetector
+    /// Called with each piece's text as it finishes, in order.
+    private let onPiece: (@Sendable (String) -> Void)?
     private var audio: [Float] = []
     private var analyzed = 0
     private var vadState = VadStreamState()
@@ -52,9 +54,10 @@ actor LiveTranscriber {
     private var lastSpeechEnd: Int?
     private var pieces: [Task<String, Error>] = []
 
-    init(engine: ParakeetEngine, voice: VoiceDetector) {
+    init(engine: ParakeetEngine, voice: VoiceDetector, onPiece: (@Sendable (String) -> Void)? = nil) {
         self.engine = engine
         self.voice = voice
+        self.onPiece = onPiece
     }
 
     /// Called in order with each chunk of 16 kHz audio while recording.
@@ -169,11 +172,14 @@ actor LiveTranscriber {
         pieceStart = cut
         pieceHasSpeech = false
         let engine = self.engine
+        let onPiece = self.onPiece
         let previous = pieces.last
         // One at a time, in order: the next piece waits for the previous one.
         pieces.append(Task {
             _ = try? await previous?.value
-            return try await engine.transcribe(piece)
+            let text = try await engine.transcribe(piece)
+            onPiece?(text)
+            return text
         })
     }
 }

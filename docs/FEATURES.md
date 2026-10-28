@@ -4,17 +4,17 @@ The features we're coming back to. Tick each one off when it ships. Details for 
 
 ## A. Daily-use basics (all offline)
 
-- [ ] 1. **History window:** search past dictations; copy, paste again, star, delete; choose how long they're kept; optionally keep the audio and re-transcribe it.
-- [ ] 2. **Clear failure notices:** silent or muted mic, missing mic, denied permission, missing model, each with a fix button.
-- [ ] 3. **Auto-send:** press Enter or ⌘Enter after pasting, per app, or say "…send it".
-- [ ] 4. **Snippets:** say "my address" and the full address is typed, with date, time and clipboard variables.
-- [ ] 5. **Exact replacements:** "gee mail" → "Gmail", "dot com" → ".com"; import your dictionary from Handy.
-- [ ] 6. **Lower music and video volume while you dictate.**
-- [ ] 7. **More triggers:** a mouse side button, a separate toggle shortcut, a choice of cancel key.
-- [ ] 8. **Transcribe a file:** drop in a voice memo or video and get the text.
-- [ ] 9. **Apps to skip:** the dictation key does nothing in password managers, games and similar apps.
-- [ ] 10. **Live text in the pill** as each piece finishes.
-- [ ] 11. **Usage stats** (words dictated, time saved), stored only on your Mac.
+- [x] 1. **History window:** search, copy, star, delete, retention (on by default, 7 days, text only). Still to do: keeping the audio and re-transcribing it.
+- [x] 2. **Clear failure notices:** silent or muted mic, missing mic, denied permission, missing model, each with a fix button.
+- [x] 3. **Auto-send:** press Enter or ⌘Enter after pasting, per app, or say "…send it".
+- [x] 4. **Snippets:** say "my address" and the full address is typed, with date, time and clipboard variables.
+- [x] 5. **Exact replacements:** "gee mail" → "Gmail", "dot com" → ".com"; import your dictionary from Handy.
+- [x] 6. **Lower music and video volume while you dictate.**
+- [~] 7. **More triggers:** ☑ a mouse button (middle, back or forward). Still to do: a separate toggle shortcut and a choice of cancel key.
+- [x] 8. **Transcribe a file:** drop in a voice memo or video and get the text.
+- [x] 9. **Apps to skip:** the dictation key does nothing in password managers, games and similar apps.
+- [x] 10. **Live text in the pill** as each piece finishes.
+- [x] 11. **Usage stats** (words dictated, time saved), stored only on your Mac.
 
 ## B. Smart formatting, on your Mac (Apple's on-device AI)
 
