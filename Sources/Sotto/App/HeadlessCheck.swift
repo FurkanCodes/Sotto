@@ -13,6 +13,14 @@ import SottoCore
 enum HeadlessCheck {
     static func runIfRequested() {
         let arguments = CommandLine.arguments
+        if arguments.contains("--list-models") {
+            let models = ModelCatalog.models
+            print("\(models.count) speech models in the catalog")
+            for model in models.prefix(12) {
+                print("  \(model.id) · \(model.familyTitle) · \(model.languageSummary) · \(model.file.map { ByteCountFormatter.string(fromByteCount: $0.size, countStyle: .file) } ?? "?")")
+            }
+            exit(models.isEmpty ? 1 : 0)
+        }
         guard let index = arguments.firstIndex(of: "--transcribe-file"), index + 1 < arguments.count else { return }
         let path = arguments[index + 1]
         let repeats = arguments.firstIndex(of: "--repeat").flatMap { Int(arguments[safe: $0 + 1] ?? "") } ?? 5
@@ -35,7 +43,15 @@ enum HeadlessCheck {
     private static func run(path: String, repeats: Int, gap: Double, warm: Bool, warmLead: Double = 2) async throws {
         let samples = try await MediaReader.samples(from: URL(fileURLWithPath: path))
         let clock = ContinuousClock()
-        let engine = ParakeetEngine()
+        let engine: any SpeechEngine
+        if let index = CommandLine.arguments.firstIndex(of: "--model"), index + 1 < CommandLine.arguments.count {
+            let helper = HelperEngine()
+            let language = CommandLine.arguments.firstIndex(of: "--language").flatMap { CommandLine.arguments[safe: $0 + 1] }
+            await helper.configure(modelPath: CommandLine.arguments[index + 1], language: language, vocabulary: [])
+            engine = helper
+        } else {
+            engine = ParakeetEngine()
+        }
         let voice = VoiceDetector()
 
         let loadTime = try await clock.measure {
@@ -86,7 +102,7 @@ enum HeadlessCheck {
 
     /// `--live`: feeds the file in at real-time speed, in 64 ms chunks like
     /// the mic, then measures the time from "release" to the final text.
-    private static func runLive(samples: [Float], engine: ParakeetEngine, voice: VoiceDetector, repeats: Int) async throws {
+    private static func runLive(samples: [Float], engine: any SpeechEngine, voice: VoiceDetector, repeats: Int) async throws {
         let clock = ContinuousClock()
         let chunk = 1024
         var runs: [[String: Any]] = []

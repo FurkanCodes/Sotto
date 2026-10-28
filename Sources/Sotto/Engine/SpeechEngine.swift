@@ -1,13 +1,15 @@
 import FluidAudio
 import Foundation
 
-/// A speech-to-text engine. Parakeet on CoreML is the default; transcribe-cpp
-/// models will implement this from an XPC helper in a later phase.
+/// A speech-to-text engine: Parakeet v3 on CoreML (built in), or a
+/// transcribe.cpp model run by the SottoEngine helper.
 protocol SpeechEngine: Actor {
     var isLoaded: Bool { get }
     func load() async throws
     /// 16 kHz mono samples in, raw transcript out.
     func transcribe(_ samples: [Float]) async throws -> String
+    /// Runs a little silence through the loaded model, so it starts warm.
+    func warmUp() async
     func unload() async
 }
 

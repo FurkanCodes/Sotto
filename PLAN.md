@@ -93,7 +93,15 @@ Built from the design canvas, in light and dark:
 - Settings: General, Shortcut, Models, Dictionary (custom words), Privacy, About;
 - the first-run setup.
 
-## Phase 4: More models and Intel ☐
+## Phase 4: More models and Intel ◐ (models done on `feature/all-models`; Intel still to do)
+
+Status:
+- ☑ transcribe-cpp in the SottoEngine XPC helper; it exits on unload. No versioned handshake yet: the app and helper ship together in one bundle.
+- ☑ The whole catalog (73 speech models), not a subset, at the user's request.
+- ☑ Downloads with progress, cancel and SHA-256 checks; files Handy already downloaded are copied. Not done: resuming a broken download.
+- ☐ Intel.
+
+Plan:
 
 - transcribe-cpp in an XPC helper, with a versioned handshake. It exits on unload.
 - Handy's model catalog, offering a subset at first: Parakeet Unified, Whisper Large v3 Turbo, Nemotron 3.5 Streaming, Canary 180M.

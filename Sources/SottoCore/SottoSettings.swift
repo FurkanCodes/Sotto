@@ -76,6 +76,10 @@ public struct SottoSettings: Codable, Equatable, Sendable {
     public var fixSelfCorrections = true
     /// Offers words the user fixes by hand right after dictating for the dictionary.
     public var learnFromCorrections = true
+    /// A catalog model id; nil uses the built-in Parakeet v3.
+    public var modelID: String?
+    /// A language code like "tr" for multilingual catalog models; nil detects it.
+    public var modelLanguage: String?
 
     public init() {}
 
@@ -109,6 +113,8 @@ public struct SottoSettings: Codable, Equatable, Sendable {
         styleRules = value(.styleRules, defaults.styleRules)
         fixSelfCorrections = value(.fixSelfCorrections, defaults.fixSelfCorrections)
         learnFromCorrections = value(.learnFromCorrections, defaults.learnFromCorrections)
+        modelID = value(.modelID, defaults.modelID)
+        modelLanguage = value(.modelLanguage, defaults.modelLanguage)
     }
 
     /// Decodes settings, falling back to defaults if the data isn't JSON at all.

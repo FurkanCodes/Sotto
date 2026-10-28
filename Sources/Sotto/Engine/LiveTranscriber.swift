@@ -39,7 +39,7 @@ actor LiveTranscriber {
     /// Silence kept before and after speech, like Handy's 450 ms (audio_toolkit/vad).
     private static let padding = Int(0.45 * Double(VoiceDetector.sampleRate))
 
-    private let engine: ParakeetEngine
+    private let engine: any SpeechEngine
     private let voice: VoiceDetector
     /// Called with each piece's text as it finishes, in order.
     private let onPiece: (@Sendable (String) -> Void)?
@@ -54,7 +54,7 @@ actor LiveTranscriber {
     private var lastSpeechEnd: Int?
     private var pieces: [Task<String, Error>] = []
 
-    init(engine: ParakeetEngine, voice: VoiceDetector, onPiece: (@Sendable (String) -> Void)? = nil) {
+    init(engine: any SpeechEngine, voice: VoiceDetector, onPiece: (@Sendable (String) -> Void)? = nil) {
         self.engine = engine
         self.voice = voice
         self.onPiece = onPiece

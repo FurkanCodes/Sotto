@@ -86,3 +86,20 @@ The text matched the all-at-once transcript in every case.
 **Rejected: forced cuts.** Cutting continuous speech at 12 s even without a pause brought the no-pause clips to 101–129 ms, but split words across pieces ("the settings file. File gets read", "almost. no CPU", "a Crash"). Sotto only cuts at real pauses; speech that never pauses stays in one piece.
 
 **Possible follow-up:** overlapping pieces with duplicate removal at the joins (FluidAudio has TokenDeduplication).
+
+## 2026-10-28: Other models in the SottoEngine helper
+
+`build/Sotto.app/Contents/MacOS/Sotto --transcribe-file <clip> --model <gguf> [--language tr] --repeat 3`, through the bundled XPC helper (transcribe.cpp at 5700f12, Metal).
+
+| Model | Clip | Load | Transcribe |
+|---|---|---|---|
+| Parakeet Unified en 0.6B, Q8 | short, 4.6 s | 65 ms (4.4 s the very first time: Metal shader compile) | 51–53 ms |
+| Parakeet Unified en 0.6B, Q8 | long, 45.8 s | 65 ms | 382–435 ms |
+| Whisper Small, Q8, `--language tr` | Turkish, 6.9 s (`say -v Yelda`) | 80–220 ms | 212–277 ms |
+| Whisper Small, Q8, automatic language | Turkish, 6.9 s | 79 ms | 218–236 ms (647 ms on the model's first run) |
+
+Whisper Small got the Turkish sentence exactly right, with and without `--language tr`: "Merhaba, yarın saat 3'te toplantımız var. Lütfen sunumu Mehmet'e gönder ve bana haber ver."
+
+**No warm-up for the helper:** after the first load, a fresh helper's first transcription is only 15–50 ms slower than the rest. The one-time Metal compile happens in `prepareModel` at launch or when switching models.
+
+**App size:** 20 MB with the helper (Sotto 12 MB, SottoEngine 8.1 MB). `strip -x` in release builds brings it to 15 MB (`du -sh build/Sotto.app`); the signature verifies and both engines still transcribe.

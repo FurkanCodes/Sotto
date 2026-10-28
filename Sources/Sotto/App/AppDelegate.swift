@@ -8,7 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let store = SettingsStore()
-        let controller = DictationController(store: store, history: HistoryStore())
+        let controller = DictationController(store: store, history: HistoryStore(), models: ModelStore())
         let statusMenu = StatusMenu(controller: controller)
         let windows = Windows(controller: controller)
         controller.onChange = { [weak statusMenu] in statusMenu?.refresh() }

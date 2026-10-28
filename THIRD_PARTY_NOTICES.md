@@ -28,6 +28,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## transcribe.cpp and ggml
+
+The SottoEngine helper is built from transcribe.cpp (https://github.com/handy-computer/transcribe.cpp) and the ggml library bundled with it. Both are licensed under the MIT License, with the same text as Handy's above and these copyright lines:
+
+```
+Copyright (c) 2026 The transcribe.cpp authors
+Copyright (c) 2023-2026 The ggml authors
+```
+
+The list of downloadable models (`model-catalog.json`) comes from Handy's catalog.
+
 ## FluidAudio
 
 Sotto uses FluidAudio (https://github.com/FluidInference/FluidAudio), licensed under the Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
@@ -36,3 +47,4 @@ Sotto uses FluidAudio (https://github.com/FluidInference/FluidAudio), licensed u
 
 - Parakeet TDT 0.6B v3 by NVIDIA, licensed CC-BY-4.0 (https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3). Sotto uses the CoreML conversion published by FluidInference.
 - Silero VAD v6.2 by the Silero Team, licensed MIT (https://github.com/snakers4/silero-vad). Sotto uses the CoreML conversion published by FluidInference.
+- Models downloaded in Settings → Models keep their own licenses, listed for each model in `model-catalog.json` and linked from its Hugging Face page.

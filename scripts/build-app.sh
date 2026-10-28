@@ -12,6 +12,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 config="${1:-release}"
+scripts/build-transcribe.sh
 swift build -c "$config" --arch arm64
 bin_dir="$(swift build -c "$config" --arch arm64 --show-bin-path)"
 
@@ -21,6 +22,18 @@ mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin_dir/Sotto" "$app/Contents/MacOS/Sotto"
 cp Resources/Info.plist "$app/Contents/Info.plist"
 cp THIRD_PARTY_NOTICES.md "$app/Contents/Resources/"
+cp Resources/model-catalog.json "$app/Contents/Resources/"
+
+# The XPC helper that runs transcribe.cpp models in their own process.
+helper="$app/Contents/XPCServices/SottoEngine.xpc"
+mkdir -p "$helper/Contents/MacOS"
+cp "$bin_dir/SottoEngine" "$helper/Contents/MacOS/SottoEngine"
+cp Resources/SottoEngine-Info.plist "$helper/Contents/Info.plist"
+
+# Local symbols are about 40% of the app; the unstripped binaries stay in .build.
+if [[ "$config" == release ]]; then
+  strip -x "$app/Contents/MacOS/Sotto" "$helper/Contents/MacOS/SottoEngine"
+fi
 
 identity="${SOTTO_SIGN_IDENTITY:-}"
 if [[ -z "$identity" ]]; then
@@ -36,5 +49,6 @@ if [[ -z "$identity" ]]; then
     identity="-"
 fi
 
+codesign --force --options runtime --sign "$identity" "$helper"
 codesign --force --options runtime --entitlements Resources/Sotto.entitlements --sign "$identity" "$app"
 echo "$app"

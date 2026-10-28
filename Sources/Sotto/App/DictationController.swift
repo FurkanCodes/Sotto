@@ -58,7 +58,12 @@ final class DictationController {
     @ObservationIgnored private var machine = DictationMachine()
     @ObservationIgnored private let hotkey = HotkeyMonitor()
     @ObservationIgnored private let recorder = AudioRecorder()
-    @ObservationIgnored private let engine = ParakeetEngine()
+    /// Parakeet v3 on the Neural Engine, built in and used by default.
+    @ObservationIgnored private let builtIn = ParakeetEngine()
+    /// Catalog models, run by the SottoEngine helper process.
+    @ObservationIgnored private let helper = HelperEngine()
+    @ObservationIgnored let models: ModelStore
+    @ObservationIgnored private var activeModelID: String?
     @ObservationIgnored private let voice = VoiceDetector()
     @ObservationIgnored private let inserter = TextInserter()
     @ObservationIgnored private let pill = PillController()
@@ -86,9 +91,31 @@ final class DictationController {
     @ObservationIgnored private var pressReturnAfterInsert = false
     @ObservationIgnored private var appendSpaceAfterInsert = true
 
-    init(store: SettingsStore, history: HistoryStore) {
+    init(store: SettingsStore, history: HistoryStore, models: ModelStore) {
         self.store = store
         self.history = history
+        self.models = models
+    }
+
+    /// The catalog model in use, if one is chosen and downloaded; nil means
+    /// the built-in Parakeet v3.
+    var catalogModel: CatalogModel? {
+        guard let id = settings.modelID, let model = ModelCatalog.model(id: id), models.isInstalled(model) else { return nil }
+        return model
+    }
+
+    private var engine: any SpeechEngine {
+        catalogModel == nil ? builtIn : helper
+    }
+
+    /// Points the helper at the chosen model, language and custom words.
+    private func configureHelper() async {
+        guard let model = catalogModel, let path = models.path(for: model) else { return }
+        await helper.configure(
+            modelPath: path.path,
+            language: model.isMultilingual ? settings.modelLanguage : nil,
+            vocabulary: settings.customWords
+        )
     }
 
     /// The mic in use, for messages: "MacBook Pro Microphone".
@@ -99,8 +126,8 @@ final class DictationController {
 
     private var settings: SottoSettings { store.settings }
 
-    var isModelDownloaded: Bool { engine.isDownloaded }
-    var modelDirectory: URL { engine.directory }
+    var isModelDownloaded: Bool { builtIn.isDownloaded }
+    var modelDirectory: URL { builtIn.directory }
     var hotkeyRunning: Bool { hotkey.isRunning }
 
     var statusText: String {
@@ -134,6 +161,17 @@ final class DictationController {
     }
 
     private func apply(_ settings: SottoSettings) {
+        Task { await configureHelper() }
+        if catalogModel?.id != activeModelID, machine.phase == .idle {
+            // A different model: free the old one and prepare the new one.
+            activeModelID = catalogModel?.id
+            modelReady = false
+            Task { [builtIn, helper] in
+                await builtIn.unload()
+                await helper.unload()
+                await self.prepareModel()
+            }
+        }
         hotkey.key = settings.dictationKey
         hotkey.mouseButton = settings.mouseButton
         history.prune(retentionDays: settings.historyRetentionDays)
@@ -164,6 +202,8 @@ final class DictationController {
     func transcribeFile(_ url: URL) async throws -> String {
         let samples = try await MediaReader.samples(from: url)
         try await voice.load()
+        await configureHelper()
+        let engine = self.engine
         try await engine.load()
         modelReady = true
         defer { scheduleUnload() }
@@ -179,10 +219,10 @@ final class DictationController {
     }
 
     private func downloadModelsIfNeeded() async {
-        guard !engine.isDownloaded else { return }
+        guard !builtIn.isDownloaded else { return }
         setStatus(.downloading(0))
         do {
-            try await engine.download { [weak self] fraction in
+            try await builtIn.download { [weak self] fraction in
                 Task { @MainActor in self?.setStatus(.downloading(fraction)) }
             }
             // Fetches the voice-detection model, then frees it until needed.
@@ -200,7 +240,10 @@ final class DictationController {
     /// doing it now keeps that wait out of the first dictation. The idle
     /// timer then frees it as usual, and later loads hit CoreML's cache.
     private func prepareModel() async {
-        guard engine.isDownloaded else { return }
+        guard builtIn.isDownloaded else { return }
+        await configureHelper()
+        activeModelID = catalogModel?.id
+        let engine = self.engine
         isPreparing = true
         onChange?()
         let clock = ContinuousClock()
@@ -295,7 +338,7 @@ final class DictationController {
             send(.failed(session: session, message: "Sotto can't use the microphone. Allow it from the menu."))
             return
         }
-        if !engine.isDownloaded {
+        if !builtIn.isDownloaded {
             send(.failed(session: session, message: "The speech model isn't downloaded yet."))
             return
         }
@@ -313,7 +356,8 @@ final class DictationController {
         // Load while the user talks, so the model is ready when they let go.
         // If it's already loaded, wake the Neural Engine instead; after idle,
         // transcription runs about 3x slower (docs/measurements.md).
-        Task { [engine, voice] in
+        let engine = self.engine
+        Task { [voice] in
             let wasLoaded = await engine.isLoaded
             try? await voice.load()
             await voice.warmUp()
@@ -526,10 +570,11 @@ final class DictationController {
         unloadTask?.cancel()
         let minutes = settings.unloadAfterMinutes
         guard minutes > 0 else { return }
-        unloadTask = Task { [engine, voice] in
+        unloadTask = Task { [builtIn, helper, voice] in
             try? await Task.sleep(for: .seconds(minutes * 60))
             guard !Task.isCancelled else { return }
-            await engine.unload()
+            await builtIn.unload()
+            await helper.unload()
             await voice.unload()
             self.modelReady = false
             self.onChange?()

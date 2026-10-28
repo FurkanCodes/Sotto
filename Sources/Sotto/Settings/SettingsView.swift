@@ -317,27 +317,51 @@ private struct ShortcutPane: View {
 private struct ModelsPane: View {
     let controller: DictationController
     @Bindable var store: SettingsStore
+    @State private var search = ""
+    @State private var showAll = false
     @State private var sizeOnDisk: String?
 
+    private var models: ModelStore { controller.models }
+
+    private var shown: [CatalogModel] {
+        let query = search.trimmingCharacters(in: .whitespaces).lowercased()
+        return ModelCatalog.models.filter { model in
+            if !query.isEmpty {
+                let languageNames = model.languages.compactMap { Locale.current.localizedString(forLanguageCode: $0)?.lowercased() }
+                return model.name.lowercased().contains(query) || model.familyTitle.lowercased().contains(query)
+                    || model.languages.contains(query) || languageNames.contains { $0.contains(query) }
+            }
+            return showAll || model.curated == true || models.isInstalled(model)
+        }
+    }
+
     var body: some View {
+        let current = controller.catalogModel
         Form {
             Section("In use") {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Parakeet TDT 0.6B v3").font(.headline)
-                        Text("NVIDIA · 25 languages, detected automatically · runs on the Neural Engine to save battery")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                        Text(current?.name ?? "Parakeet TDT 0.6B v3").font(.headline)
+                        Text(current.map(details) ?? "NVIDIA · 25 languages, detected automatically · built in, runs on the Neural Engine to save battery")
+                            .font(.callout).foregroundStyle(.secondary)
                         Text(controller.modelReady ? "Loaded and ready." : "Not loaded right now. It loads while you start talking.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                            .font(.callout).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Label("Default", systemImage: "checkmark")
-                        .font(.callout.weight(.semibold))
-                        .foregroundStyle(.green)
+                    if current != nil {
+                        Button("Use Built-in") { store.settings.modelID = nil }
+                    } else {
+                        Label("Default", systemImage: "checkmark").font(.callout.weight(.semibold)).foregroundStyle(.green)
+                    }
                 }
-                LabeledContent("Size on disk", value: sizeOnDisk ?? "…")
+                if let current, current.isMultilingual {
+                    Picker("Language", selection: $store.settings.modelLanguage) {
+                        Text("Detect automatically").tag(String?.none)
+                        ForEach(Self.languageChoices(for: current), id: \.code) { choice in
+                            Text(choice.name).tag(String?.some(choice.code))
+                        }
+                    }
+                }
                 Picker(selection: $store.settings.unloadAfterMinutes) {
                     Text("After 1 minute").tag(1)
                     Text("After 5 minutes").tag(5)
@@ -348,30 +372,115 @@ private struct ModelsPane: View {
                     Text("Unload when idle")
                     Text("Frees the model's memory. The next dictation loads it again, while you talk.")
                 }
-                Button("Show in Finder") {
-                    NSWorkspace.shared.activateFileViewerSelecting([controller.modelDirectory])
-                }
             }
+
             Section {
-                Text("Whisper, Nemotron and other models are coming in a later version.")
-                    .foregroundStyle(.secondary)
+                TextField("Search by name or language, like Turkish", text: $search)
+                Toggle("Show all \(ModelCatalog.models.count) models", isOn: $showAll)
+            } header: {
+                Text("More models")
+            } footer: {
+                Text("These run on the GPU in a separate helper process. Each downloads once from Hugging Face and is checked before use.")
+            }
+
+            ForEach(Self.grouped(shown), id: \.title) { group in
+                Section(group.title) {
+                    ForEach(group.models) { model in
+                        ModelRow(model: model, models: models, isCurrent: model.id == current?.id) {
+                            store.settings.modelID = model.id
+                        }
+                    }
+                }
             }
         }
         .formStyle(.grouped)
-        .task {
-            let directory = controller.modelDirectory
-            let bytes = await Task.detached { Self.size(of: directory) }.value
-            sizeOnDisk = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
-        }
     }
 
-    private nonisolated static func size(of directory: URL) -> Int64 {
-        guard let files = FileManager.default.enumerator(at: directory, includingPropertiesForKeys: [.fileSizeKey]) else { return 0 }
-        var total: Int64 = 0
-        for case let url as URL in files {
-            total += Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+    private func details(_ model: CatalogModel) -> String {
+        var parts = [model.languageSummary]
+        if let parameters = model.parameters { parts.append(parameters + " parameters") }
+        parts.append("runs on the GPU")
+        return parts.joined(separator: " · ")
+    }
+
+    private static func grouped(_ models: [CatalogModel]) -> [(title: String, models: [CatalogModel])] {
+        var order: [String] = []
+        var groups: [String: [CatalogModel]] = [:]
+        for model in models {
+            let title = ModelCatalog.isRecommended(model) ? "Recommended" : model.familyTitle
+            if groups[title] == nil { order.append(title) }
+            groups[title, default: []].append(model)
         }
-        return total
+        return order.map { ($0, groups[$0] ?? []) }
+    }
+
+    private static func languageChoices(for model: CatalogModel) -> [(code: String, name: String)] {
+        let codes = Set(model.languages.map { String($0.prefix(2)) })
+        return codes.compactMap { code in
+            Locale.current.localizedString(forLanguageCode: code).map { (code, $0) }
+        }
+        .sorted { $0.name.localizedCompare($1.name) == .orderedAscending }
+    }
+}
+
+private struct ModelRow: View {
+    let model: CatalogModel
+    let models: ModelStore
+    let isCurrent: Bool
+    let use: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(model.name).fontWeight(.medium)
+                Text(subtitle).font(.callout).foregroundStyle(.secondary).lineLimit(2)
+                if case .running(let fraction) = models.downloads[model.id] {
+                    ProgressView(value: fraction).frame(maxWidth: 260)
+                }
+                if case .failed(let message) = models.downloads[model.id] {
+                    Text(message).font(.callout).foregroundStyle(.orange)
+                }
+            }
+            Spacer(minLength: 8)
+            actions
+        }
+        .padding(.vertical, 2)
+    }
+
+    private var subtitle: String {
+        var parts = [model.languageSummary]
+        if let size = model.file?.size { parts.append(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)) }
+        if model.capabilities?.streaming == true { parts.append("transcribes while you talk") }
+        if let license = model.license { parts.append(license) }
+        return parts.joined(separator: " · ")
+    }
+
+    @ViewBuilder
+    private var actions: some View {
+        switch models.downloads[model.id] {
+        case .running:
+            Button("Cancel") { models.cancel(model) }
+        case .checking:
+            ProgressView().controlSize(.small)
+        default:
+            if models.isInstalled(model) {
+                if isCurrent {
+                    Label("In use", systemImage: "checkmark").font(.callout.weight(.semibold)).foregroundStyle(.green)
+                } else {
+                    Button("Use", action: use)
+                    Button {
+                        models.delete(model)
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Delete \(model.name)")
+                    .accessibilityLabel("Delete \(model.name)")
+                }
+            } else {
+                Button("Download") { models.download(model) }
+            }
+        }
     }
 }
 
