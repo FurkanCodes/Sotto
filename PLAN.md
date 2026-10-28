@@ -34,7 +34,7 @@ These are checked by measurement, not by claims. On Apple Silicon, macOS 26.
 
 Still open in Phase 1:
 - **Verify pinned models.** FluidAudio downloads the models itself; checking them against a SHA-256 list is not done yet.
-- **Voice detection runs after release,** on the whole recording. Moving it to run during recording is a Phase 2 item.
+- ☑ Voice detection now runs during recording (Phase 2 work, done early).
 
 The goal is dictation working end to end in any app, with a basic pill. Polish comes later.
 
@@ -72,7 +72,7 @@ The goal is dictation working end to end in any app, with a basic pill. Polish c
 ## Phase 2: Measure and harden ☐
 
 - **Timing harness** (replayed WAV plus posted key events), used to measure live Handy and Sotto on the same machine.
-- **Long dictations:** split audio at Silero pauses while recording, so the time after release stays flat with length.
+- ☑ **Long dictations:** audio is split at Silero pauses while recording (commit d7aa4bf). Speech with no pauses at all still goes in one piece; overlapping pieces with duplicate removal at the joins would fix that.
 - **The Option A or B decision:** load and unload 50 times and check that memory comes back. Record the result in `docs/`.
 - **Every failure state is visible and recoverable:**
   - no model;
