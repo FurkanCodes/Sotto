@@ -191,3 +191,16 @@ The first comparison of the four whole-clip models was discarded: the app bundle
 The GPU build drew about 5.8× the power, about 2.2 W more while dictating. Same text from both; after release 14–37 ms (Neural Engine) against 46–53 ms (GPU); first live text 0.86 s against 0.88 s.
 
 The idle phase read higher than the Neural Engine phase, so something else was busy in those 30 s; the two engines are compared directly rather than against idle.
+
+## 2026-10-28: CPU time over one dictation
+
+Signed release build, built-in Parakeet v3 on the Neural Engine. `Sotto --transcribe-file medium.wav --live --repeat 1` fed the 15.4 s clip in real time, and a script read the process's CPU time (`ps -p <pid> -o time=`, 10 ms resolution) every 100 ms. The trace is in `video/public/data/cpu-trace.json`.
+
+| Phase | CPU time |
+|---|---|
+| Model load, before the clip starts (the app does this at launch) | 0.17 s |
+| Listening, 15.2 s | 0.10 s (about 0.65% of one core) |
+| After release, transcribing (about 0.2 s, peaking at 174% of one core) | 0.25 s |
+| **The dictation itself, listening plus release** | **0.35 s** |
+
+Release to text was 198 ms in this run, against 117 ms in the live-app test above. The built-in model transcribes at release here, not while talking (the clip has no pauses).
