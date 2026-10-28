@@ -31,8 +31,11 @@ public enum CustomWords {
                 let candidate = run.map(matchKey).joined()
                 // Four-word runs must match exactly ("Chat G P T"); fuzzy
                 // matching that wide swallows neighbors ("use Chat G P").
+                // So must runs with a common short word: fuzzily, "so the"
+                // sounds like "Sotto" and "R and D" like many things.
+                let exactOnly = length == 4 || (length > 1 && run.contains { commonWords.contains(matchKey($0)) })
                 if let match = bestMatch(for: candidate, among: keys, words: customWords, threshold: threshold),
-                   length < 4 || match.score == 0,
+                   !exactOnly || match.score == 0,
                    match.score < (best?.score ?? .infinity) {
                     best = (length, match.word, match.score)
                 }
@@ -51,6 +54,13 @@ public enum CustomWords {
     }
 
     // MARK: - Matching
+
+    /// Short English words that are almost never part of a misheard name.
+    private static let commonWords: Set<String> = [
+        "a", "an", "the", "to", "of", "in", "on", "at", "by", "for", "from", "with", "as", "so", "and", "or", "but",
+        "if", "is", "it", "be", "do", "no", "not", "up", "out", "i", "me", "my", "we", "us", "our", "you", "he",
+        "she", "they", "that", "this",
+    ]
 
     private struct Key {
         let wordIndex: Int

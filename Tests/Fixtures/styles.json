@@ -3,6 +3,13 @@
   "cases": [
     { "input": "Sounds good, see you at 3.", "style": "casual", "expected": "sounds good, see you at 3" },
     { "input": "Sounds good, see you at 3.", "style": "standard", "expected": "Sounds good, see you at 3." },
+    { "input": "So I think we should ship it on Friday", "style": "standard", "expected": "So I think we should ship it on Friday." },
+    { "input": "Meet me at 3", "style": "standard", "expected": "Meet me at 3." },
+    { "input": "Yes", "style": "standard", "expected": "Yes" },
+    { "input": "OK thanks", "style": "standard", "expected": "OK thanks" },
+    { "input": "ok see you soon", "style": "standard", "expected": "ok see you soon" },
+    { "input": "Is this working", "style": "standard", "expected": "Is this working." },
+    { "input": "Did you see it?", "style": "standard", "expected": "Did you see it?" },
     { "input": "Are you coming tonight?", "style": "casual", "expected": "are you coming tonight?" },
     { "input": "That's great!", "style": "casual", "expected": "that's great!" },
     { "input": "I think so.", "style": "casual", "expected": "I think so" },

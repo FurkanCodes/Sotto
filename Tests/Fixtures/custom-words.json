@@ -16,6 +16,8 @@
     { "input": "「Handee。」", "words": ["Handy"], "threshold": 0.5, "expected": "「Handy。」" },
     { "input": "你好。", "words": ["你号"], "threshold": 1.0, "expected": "你好。" },
     { "input": "Let's ask Furcan about it.", "words": ["Furkan"], "threshold": 0.18, "expected": "Let's ask Furkan about it." },
+    { "input": "so the live text has time to show up", "words": ["Sotto"], "threshold": 0.18, "expected": "so the live text has time to show up" },
+    { "input": "I am building Soto today", "words": ["Sotto"], "threshold": 0.18, "expected": "I am building Sotto today" },
     { "input": "The weather is nice today.", "words": ["Furkan", "Sotto"], "threshold": 0.18, "expected": "The weather is nice today." }
   ]
 }

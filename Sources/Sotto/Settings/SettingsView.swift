@@ -633,9 +633,9 @@ private struct PrivacyPane: View {
     var body: some View {
         Form {
             Section {
-                Label("Speech is turned into text on this Mac, by its Neural Engine.", systemImage: "cpu")
-                Label("After the model download, Sotto makes no network connections.", systemImage: "network.slash")
-                Label("Your dictation history is stored only on this Mac, encrypted with your login.", systemImage: "clock.arrow.circlepath")
+                Label("Speech is turned into text on this Mac, never in the cloud.", systemImage: "cpu")
+                Label("Apart from downloading the models you choose, Sotto makes no network connections.", systemImage: "network.slash")
+                Label("Your dictation history stays on this Mac, in your user folder, for as long as you choose below.", systemImage: "clock.arrow.circlepath")
                 Label("No analytics, no crash reports, no account.", systemImage: "hand.raised")
             }
             Section("History") {

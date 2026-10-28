@@ -4,7 +4,8 @@ import Foundation
 /// capitalization, the final period and the trailing space change, never
 /// the words.
 public enum TextStyle: String, Codable, CaseIterable, Sendable {
-    /// Proper sentences, as transcribed.
+    /// Proper sentences, as transcribed, with the final period added when
+    /// the model left it off.
     case standard
     /// Chat: no capital at the start, no period at the end.
     case casual
@@ -54,13 +55,26 @@ public enum Styles {
     /// Shapes `text` for `style`. `keepCapitalized` lists words whose
     /// capital stays even at the start, such as the user's custom words.
     public static func apply(_ text: String, style: TextStyle, keepCapitalized: [String] = []) -> String {
-        guard style != .standard, !text.isEmpty else { return text }
+        guard !text.isEmpty else { return text }
+        if style == .standard { return endingSentence(text) }
         var output = lowercasingFirstWord(text, keepCapitalized: keepCapitalized)
         // Questions and exclamations keep their mark; only a final period goes.
         if output.hasSuffix("."), !output.hasSuffix("..") {
             output.removeLast()
         }
         return output
+    }
+
+    /// "So I think we should ship it on Friday" gets its period. Streaming
+    /// models often leave it off. Only text that reads as a full sentence
+    /// (a capital first letter, three or more words, ending in a letter or
+    /// digit) gets one, so "Yes" and "ok see you" stay as they are.
+    static func endingSentence(_ text: String) -> String {
+        guard let last = text.last, last.isLetter || last.isNumber,
+              text.first(where: \.isLetter)?.isUppercase == true,
+              text.split(whereSeparator: \.isWhitespace).count >= 3
+        else { return text }
+        return text + "."
     }
 
     /// "Sounds good" → "sounds good", but "I", "NASA", "iPhone" and the
