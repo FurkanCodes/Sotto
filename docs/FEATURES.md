@@ -8,7 +8,7 @@ The features we're coming back to. Tick each one off when it ships. Details for 
 - [x] 2. **Clear failure notices:** silent or muted mic, missing mic, denied mic, missing model. The pill says how to fix it, and the menu links to setup. Still to do: a clickable fix button in the pill.
 - [x] 3. **Auto-send:** press Enter or ⌘Enter after pasting, per app, or say "…send it".
 - [x] 4. **Snippets:** say "my address" and the full address is typed, with date, time and clipboard variables.
-- [x] 5. **Exact replacements:** "gee mail" → "Gmail", "dot com" → ".com"; import your dictionary from Handy.
+- [x] 5. **Exact replacements:** "gee mail" → "Gmail", "dot com" → ".com".
 - [x] 6. **Lower music and video volume while you dictate.**
 - [~] 7. **More triggers:** ☑ a mouse button (middle, back or forward). Still to do: a separate toggle shortcut and a choice of cancel key.
 - [x] 8. **Transcribe a file:** drop in a voice memo or video and get the text.
@@ -44,7 +44,7 @@ Plugins get their own design. Buffer will be one plugin. The items below are ide
 
 ## D. More models and languages
 
-- [x] 28. **Whisper Large v3 Turbo:** Turkish and about 100 languages. All 73 speech models in Handy's catalog can be downloaded in Settings → Models and run in the SottoEngine helper (transcribe.cpp). Tested with Whisper Small on Turkish; Turbo uses the same path but hasn't been run yet.
+- [x] 28. **Whisper Large v3 Turbo:** Turkish and about 100 languages. 73 speech models can be downloaded in Settings → Models and run in the SottoEngine helper (transcribe.cpp). Tested with Whisper Small on Turkish; Turbo uses the same path but hasn't been run yet.
 - [x] 29. **Language switch,** or automatic, for multilingual models.
 - [x] 30. **Nemotron and Parakeet Unified:** they stream: the helper transcribes while you talk, so the wait after release stays under 0.2 s however long you talk, pauses or not, and the caption updates about once a second. Nemotron's Turkish is weak (it garbled about a third of the words of the test sentence); Whisper does far better.
 - [ ] 31. **Translate any language to English.** transcribe.cpp supports it, but none of the catalog's models declare it (Whisper Turbo can't translate).

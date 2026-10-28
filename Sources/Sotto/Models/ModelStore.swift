@@ -49,13 +49,8 @@ final class ModelStore {
                 try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
                 let staged = target.appendingPathExtension("partial")
                 try? FileManager.default.removeItem(at: staged)
-                if let handyCopy = Self.handyCopy(of: file) {
-                    // Already downloaded by Handy: a copy is instant on APFS.
-                    try FileManager.default.copyItem(at: handyCopy, to: staged)
-                } else {
-                    try await Self.fetch(url, to: staged) { fraction in
-                        Task { @MainActor in self?.downloads[model.id] = .running(fraction) }
-                    }
+                try await Self.fetch(url, to: staged) { fraction in
+                    Task { @MainActor in self?.downloads[model.id] = .running(fraction) }
                 }
                 await MainActor.run { self?.downloads[model.id] = .checking }
                 let hash = try await Task.detached { try Self.sha256(of: staged) }.value
@@ -147,16 +142,6 @@ final class ModelStore {
             hasher.update(data: chunk)
         }
         return hasher.finalize().map { String(format: "%02x", $0) }.joined()
-    }
-
-    /// The same file in Handy's model folder, if Handy downloaded it.
-    private nonisolated static func handyCopy(of file: CatalogModel.File) -> URL? {
-        guard let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return nil }
-        let candidate = support.appendingPathComponent("com.pais.handy/models/\(file.filename)")
-        guard let attributes = try? FileManager.default.attributesOfItem(atPath: candidate.path),
-              (attributes[.size] as? NSNumber)?.int64Value == file.size
-        else { return nil }
-        return candidate
     }
 }
 

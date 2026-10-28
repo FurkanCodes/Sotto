@@ -504,7 +504,6 @@ private struct DictionaryPane: View {
     @State private var replaceTo = ""
     @State private var snippetTrigger = ""
     @State private var snippetText = ""
-    @State private var handyWords = HandyImport.customWords()
 
     private var trimmed: String { newWord.trimmingCharacters(in: .whitespacesAndNewlines) }
 
@@ -515,14 +514,6 @@ private struct DictionaryPane: View {
                     TextField("Add a name or term", text: $newWord)
                         .onSubmit(add)
                     Button("Add", action: add).disabled(trimmed.isEmpty)
-                }
-                if let handyWords, !handyWords.isEmpty {
-                    Button("Import \(handyWords.count) Words from Handy") {
-                        for word in handyWords where !store.settings.customWords.contains(where: { $0.caseInsensitiveCompare(word) == .orderedSame }) {
-                            store.settings.customWords.append(word)
-                        }
-                        self.handyWords = []
-                    }
                 }
                 Toggle(isOn: $store.settings.learnFromCorrections) {
                     Text("Learn from my corrections")

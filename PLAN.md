@@ -98,7 +98,7 @@ Built from the design canvas, in light and dark:
 Status:
 - ☑ transcribe-cpp in the SottoEngine XPC helper; it exits on unload. No versioned handshake yet: the app and helper ship together in one bundle.
 - ☑ The whole catalog (73 speech models), not a subset, at the user's request.
-- ☑ Downloads with progress, cancel and SHA-256 checks; files Handy already downloaded are copied. Not done: resuming a broken download.
+- ☑ Downloads with progress, cancel and SHA-256 checks. Not done: resuming a broken download.
 - ☐ Intel.
 
 Plan:

@@ -55,7 +55,7 @@ swift test             # core tests
 
 ## Credits
 
-Built on [Handy](https://github.com/cjpais/Handy), [FluidAudio](https://github.com/FluidInference/FluidAudio) and [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp). Models keep their own licenses. See [notices](THIRD_PARTY_NOTICES.md).
+Speech runs on [FluidAudio](https://github.com/FluidInference/FluidAudio) and [transcribe.cpp](https://github.com/handy-computer/transcribe.cpp). Models keep their own licenses. See [notices](THIRD_PARTY_NOTICES.md).
 
 ## License
 

@@ -2,8 +2,8 @@ import AppKit
 import ApplicationServices
 import AVFoundation
 
-/// The three permissions dictation needs. Handy only checks the first two;
-/// a listen-only event tap also needs Input Monitoring.
+/// The three permissions dictation needs. The listen-only event tap that
+/// watches the dictation key needs Input Monitoring.
 @MainActor
 enum Permission: CaseIterable {
     case microphone, accessibility, inputMonitoring

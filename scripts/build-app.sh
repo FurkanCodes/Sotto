@@ -23,6 +23,12 @@ cp "$bin_dir/Sotto" "$app/Contents/MacOS/Sotto"
 cp Resources/Info.plist "$app/Contents/Info.plist"
 cp THIRD_PARTY_NOTICES.md "$app/Contents/Resources/"
 cp Resources/model-catalog.json "$app/Contents/Resources/"
+# The app icon, from Icon Composer's format: macOS 26 draws it with Liquid
+# Glass, and older-style icons get boxed in a gray frame. actool also writes
+# AppIcon.icns for older places that read it.
+xcrun actool Resources/AppIcon.icon --compile "$app/Contents/Resources" --platform macosx \
+  --minimum-deployment-target 26.0 --app-icon AppIcon \
+  --output-partial-info-plist "$(mktemp)" --errors --warnings --output-format human-readable-text >/dev/null
 
 # The XPC helper that runs transcribe.cpp models in their own process.
 helper="$app/Contents/XPCServices/SottoEngine.xpc"
