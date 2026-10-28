@@ -43,6 +43,11 @@ enum HeadlessCheck {
             try await engine.load()
         }
 
+        if CommandLine.arguments.contains("--live") {
+            try await runLive(samples: samples, engine: engine, voice: voice, repeats: repeats)
+            return
+        }
+
         var vadTimes: [Duration] = []
         var transcribeTimes: [Duration] = []
         var text = ""
@@ -77,6 +82,41 @@ enum HeadlessCheck {
         ]
         let json = try JSONSerialization.data(withJSONObject: result, options: [.sortedKeys])
         print(String(decoding: json, as: UTF8.self))
+    }
+
+    /// `--live`: feeds the file in at real-time speed, in 64 ms chunks like
+    /// the mic, then measures the time from "release" to the final text.
+    private static func runLive(samples: [Float], engine: ParakeetEngine, voice: VoiceDetector, repeats: Int) async throws {
+        let clock = ContinuousClock()
+        let chunk = 1024
+        var runs: [[String: Any]] = []
+        for _ in 0..<max(1, repeats) {
+            let live = LiveTranscriber(engine: engine, voice: voice)
+            var offset = 0
+            let start = clock.now
+            while offset < samples.count {
+                let end = min(offset + chunk, samples.count)
+                await live.append(Array(samples[offset..<end]))
+                offset = end
+                try await clock.sleep(until: start + .milliseconds(offset * 1000 / 16_000))
+            }
+            let releasedAt = clock.now
+            let result = try await live.finish(fullAudio: samples)
+            let afterRelease = clock.now - releasedAt
+            runs.append([
+                "release_to_text_ms": milliseconds(afterRelease),
+                "pieces_while_talking": result.piecesWhileTalking,
+                "tail_seconds": (result.tailSeconds * 10).rounded() / 10,
+                "fallback": result.usedFallback,
+                "text": TextCleanup.clean(result.text),
+            ])
+        }
+        let json = try JSONSerialization.data(withJSONObject: ["audio_seconds": Double(samples.count) / 16_000, "runs": runs], options: [.sortedKeys])
+        print(String(decoding: json, as: UTF8.self))
+    }
+
+    private static func milliseconds(_ duration: Duration) -> Int {
+        Int((Double(duration.components.attoseconds) / 1e15 + Double(duration.components.seconds) * 1000).rounded())
     }
 }
 

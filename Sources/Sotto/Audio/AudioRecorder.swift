@@ -16,9 +16,11 @@ final class AudioRecorder {
 
     /// `onFirstAudio` fires once, when the first real audio arrives. Bluetooth
     /// mics can take seconds to deliver it (Handy managers/audio.rs).
+    /// `onAudio` receives each converted chunk, in order, on the audio thread.
     func start(
         onFirstAudio: @escaping @Sendable () -> Void,
-        onLevel: @escaping @Sendable (Float) -> Void
+        onLevel: @escaping @Sendable (Float) -> Void,
+        onAudio: @escaping @Sendable ([Float]) -> Void
     ) throws {
         _ = stop()
         let engine = AVAudioEngine()
@@ -29,7 +31,9 @@ final class AudioRecorder {
               let converter = AVAudioConverter(from: inputFormat, to: target)
         else { throw RecorderError.unsupportedFormat }
 
-        let capture = CaptureBuffer(converter: converter, target: target, onFirstAudio: onFirstAudio, onLevel: onLevel)
+        let capture = CaptureBuffer(
+            converter: converter, target: target, onFirstAudio: onFirstAudio, onLevel: onLevel, onAudio: onAudio
+        )
         input.installTap(onBus: 0, bufferSize: 1024, format: inputFormat, block: capture.makeTapBlock())
         engine.prepare()
         try engine.start()
@@ -67,17 +71,20 @@ private final class CaptureBuffer: @unchecked Sendable {
     private let state = Mutex(State())
     private let onFirstAudio: @Sendable () -> Void
     private let onLevel: @Sendable (Float) -> Void
+    private let onAudio: @Sendable ([Float]) -> Void
 
     init(
         converter: AVAudioConverter,
         target: AVAudioFormat,
         onFirstAudio: @escaping @Sendable () -> Void,
-        onLevel: @escaping @Sendable (Float) -> Void
+        onLevel: @escaping @Sendable (Float) -> Void,
+        onAudio: @escaping @Sendable ([Float]) -> Void
     ) {
         self.converter = converter
         self.target = target
         self.onFirstAudio = onFirstAudio
         self.onLevel = onLevel
+        self.onAudio = onAudio
     }
 
     /// Built here, outside the main actor, because the tap calls it on an
@@ -122,6 +129,7 @@ private final class CaptureBuffer: @unchecked Sendable {
         }
         if isFirst { onFirstAudio() }
         onLevel(rms)
+        onAudio(Array(chunk))
     }
 }
 

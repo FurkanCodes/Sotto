@@ -40,6 +40,11 @@ final class DictationController {
     private var lastKeyEventAt: TimeInterval = 0
     private var unloadTask: Task<Void, Never>?
     private var setupRetry: Task<Void, Never>?
+    /// The dictation being transcribed while the user talks, and the
+    /// in-order stream of audio that feeds it.
+    private var live: LiveTranscriber?
+    private var liveInput: AsyncStream<[Float]>.Continuation?
+    private var liveFeed: Task<Void, Never>?
     private var signpostState: OSSignpostIntervalState?
     private static let unloadAfter: Duration = .seconds(5 * 60)
 
@@ -157,6 +162,10 @@ final class DictationController {
             stopAndTranscribe(session)
         case .discardCapture:
             _ = recorder.stop()
+            liveInput?.finish()
+            liveFeed?.cancel()
+            if let live { Task { await live.cancel() } }
+            (live, liveInput, liveFeed) = (nil, nil, nil)
             endSignpost()
             setStatus(.ready)
         case .insert(let text, let session):
@@ -196,6 +205,14 @@ final class DictationController {
             }
         }
 
+        let live = LiveTranscriber(engine: engine, voice: voice)
+        let (stream, input) = AsyncStream.makeStream(of: [Float].self)
+        self.live = live
+        liveInput = input
+        liveFeed = Task {
+            for await chunk in stream { await live.append(chunk) }
+        }
+
         do {
             try recorder.start(
                 onFirstAudio: { [weak self] in
@@ -203,7 +220,8 @@ final class DictationController {
                 },
                 onLevel: { [weak self] level in
                     Task { @MainActor in self?.pill.push(level: level) }
-                }
+                },
+                onAudio: { chunk in input.yield(chunk) }
             )
             setStatus(.listening)
         } catch {
@@ -226,30 +244,28 @@ final class DictationController {
         let samples = recorder.stop()
         let micCloseTime = clock.now - stopStart
         setStatus(.ready)
-        Task { [engine, voice] in
+        guard let live, let liveFeed else {
+            send(.failed(session: session, message: "Couldn't transcribe"))
+            return
+        }
+        liveInput?.finish()
+        (self.live, liveInput, self.liveFeed) = (nil, nil, nil)
+        Task {
             let interval = Log.signposter.beginInterval("transcribe")
             defer { Log.signposter.endInterval("transcribe", interval) }
-            let start = clock.now
             let waitedToStart = ProcessInfo.processInfo.systemUptime - self.stoppedAt
-            let detected = await voice.speech(in: samples)
-            let detectTime = clock.now - start
-            guard let speech = detected else {
-                self.send(.transcribed(session: session, text: ""))
-                return
-            }
+            // Let the stream deliver what it already has before finishing.
+            await liveFeed.value
             do {
-                let wasLoaded = await engine.isLoaded
-                let transcribeStart = clock.now
-                let raw = try await engine.transcribe(speech)
-                let transcribeTime = clock.now - transcribeStart
+                let result = try await live.finish(fullAudio: samples)
                 self.breakdown = String(
-                    format: "%.1f s audio · key-up to work %d ms (mic close %d) · voice detection %d ms · %@ %d ms",
-                    Double(samples.count) / 16_000,
+                    format: "%.1f s audio · %d pieces done while talking · %.1f s tail · key-up to work %d ms (mic close %d) · detection %d ms · waiting for pieces %d ms · tail transcription %d ms%@",
+                    Double(samples.count) / 16_000, result.piecesWhileTalking, result.tailSeconds,
                     Int((waitedToStart * 1000).rounded()), Self.milliseconds(micCloseTime),
-                    Self.milliseconds(detectTime),
-                    wasLoaded ? "transcription" : "load + transcription", Self.milliseconds(transcribeTime)
+                    Self.milliseconds(result.detectAfterRelease), Self.milliseconds(result.waitForPieces),
+                    Self.milliseconds(result.transcribeTail), result.usedFallback ? " · whole-recording fallback" : ""
                 )
-                self.send(.transcribed(session: session, text: TextCleanup.clean(raw)))
+                self.send(.transcribed(session: session, text: TextCleanup.clean(result.text)))
             } catch {
                 Log.app.error("Transcription failed: \(error.localizedDescription, privacy: .public)")
                 self.send(.failed(session: session, message: "Couldn't transcribe"))

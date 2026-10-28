@@ -67,3 +67,22 @@ Headless, 4.6 s clip, `--gap` = idle seconds before each run, `--warm-lead` = wa
 **Conclusion:** after idle, the pipeline is about 3x slower. The key-down warm-up recovers about half of that. It doesn't reach back-to-back speed, because the hardware is fastest while it's continuously busy.
 
 **Next step (Phase 2):** process audio in chunks while the user is still talking, so the hardware stays busy and only the tail is left at release.
+
+## 2026-10-28: Transcribing while the user talks
+
+Headless `--live`: the file is fed in at real-time speed in 64 ms chunks; the time measured runs from the last chunk ("release") to the final text. The model is warm, 3 runs each. `paused.wav` is synthetic speech with normal 600–700 ms pauses between sentences.
+
+| Clip | All at once (before) | While talking (now) | Pieces done before release | Left at release |
+|---|---|---|---|---|
+| short, 4.6 s | 71 ms | 52–54 ms | 1 | 0.7 s |
+| paused, 35.7 s | 193 ms | 77–96 ms | 5 | 4.6 s |
+| medium, 15.4 s, no pauses | 152 ms | 172–175 ms | 0 | 15.4 s |
+| long, 45.8 s, no pauses | 220 ms | 225–240 ms | 0 | 45.8 s |
+
+The text matched the all-at-once transcript in every case.
+
+**Pause detection:** Silero scores normal sentence pauses at 0.1–0.4 per 256 ms window, against 1.0 for speech. FluidAudio's end-of-speech event needs 0.75 s of silence, so it missed them. Sotto cuts at windows scoring under 0.5.
+
+**Rejected: forced cuts.** Cutting continuous speech at 12 s even without a pause brought the no-pause clips to 101–129 ms, but split words across pieces ("the settings file. File gets read", "almost. no CPU", "a Crash"). Sotto only cuts at real pauses; speech that never pauses stays in one piece.
+
+**Possible follow-up:** overlapping pieces with duplicate removal at the joins (FluidAudio has TokenDeduplication).
