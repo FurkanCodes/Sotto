@@ -5,7 +5,7 @@ The features we're coming back to. Tick each one off when it ships. Details for 
 ## A. Daily-use basics (all offline)
 
 - [x] 1. **History window:** search, copy, star, delete, retention (on by default, 7 days, text only). Still to do: keeping the audio and re-transcribing it.
-- [x] 2. **Clear failure notices:** silent or muted mic, missing mic, denied permission, missing model, each with a fix button.
+- [x] 2. **Clear failure notices:** silent or muted mic, missing mic, denied mic, missing model. The pill says how to fix it, and the menu links to setup. Still to do: a clickable fix button in the pill.
 - [x] 3. **Auto-send:** press Enter or ⌘Enter after pasting, per app, or say "…send it".
 - [x] 4. **Snippets:** say "my address" and the full address is typed, with date, time and clipboard variables.
 - [x] 5. **Exact replacements:** "gee mail" → "Gmail", "dot com" → ".com"; import your dictionary from Handy.
