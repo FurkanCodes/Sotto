@@ -21,7 +21,7 @@ The features we're coming back to. Tick each one off when it ships. Details for 
 Built in-house, with rules instead of an AI model: 13, 12 and 17, in that order. 14 and 15 need an AI model and are on hold, because Sotto shouldn't depend on something outside it.
 
 - [ ] 12. **Self-correction (rule-based):** clear corrections like "at 2, actually 3" → "at 3" and "Ali, no wait, Mehmet" → "Mehmet"; vaguer ones stay as spoken.
-- [ ] 13. **A style per app (rule-based):** capitalization and punctuation rules per app type (casual in chat, proper sentences in email, no auto-punctuation in code editors and terminals), editable per app.
+- [x] 13. **A style per app (rule-based):** capitalization and punctuation rules per app type (casual in chat, proper sentences in email, no auto-punctuation in code editors and terminals), editable per app.
 - [ ] 14. *(On hold: needs an AI model.)* **Custom modes:** "Polish", "Make it shorter", "Write as a prompt", "Translate to English", each with its own key or spoken trigger.
 - [ ] 15. *(On hold: needs an AI model.)* **Voice editing:** select text and say "make this more formal".
 - [ ] 16. **Context awareness:** knowing the app drives 13. Rewriting from the surrounding text is on hold, because it needs an AI model.

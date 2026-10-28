@@ -126,6 +126,37 @@ private struct GeneralPane: View {
                 }
             }
             Section {
+                Toggle(isOn: $store.settings.matchStyleToApp) {
+                    Text("Match the style to the app")
+                    Text("Chat apps get casual text: no capital at the start, no period at the end. Code editors and terminals get plain text with no trailing space. Everything else gets proper sentences.")
+                }
+                if store.settings.matchStyleToApp {
+                    ForEach($store.settings.styleRules) { $rule in
+                        HStack {
+                            Text(rule.app.name)
+                            Spacer()
+                            Picker("Style", selection: $rule.style) {
+                                ForEach(TextStyle.allCases, id: \.self) { Text($0.title).tag($0) }
+                            }
+                            .labelsHidden()
+                            .fixedSize()
+                            RemoveButton(name: rule.app.name) {
+                                store.settings.styleRules.removeAll { $0.id == rule.id }
+                            }
+                        }
+                    }
+                    Button("Set a Style for an App…") {
+                        if let app = AppPicker.choose(), !store.settings.styleRules.contains(where: { $0.app == app }) {
+                            store.settings.styleRules.append(StyleRule(app: app, style: Styles.defaultStyle(forBundleID: app.bundleID)))
+                        }
+                    }
+                }
+            } header: {
+                Text("Styles")
+            } footer: {
+                Text("Only capitals, the final period and the trailing space change, never your words. “I”, acronyms and your custom words keep their capitals.")
+            }
+            Section {
                 ForEach($store.settings.autoSendApps) { $rule in
                     HStack {
                         Text(rule.app.name)
@@ -154,6 +185,16 @@ private struct GeneralPane: View {
             PrivacyFooter()
         }
         .formStyle(.grouped)
+    }
+}
+
+extension TextStyle {
+    var title: String {
+        switch self {
+        case .standard: "Standard"
+        case .casual: "Casual"
+        case .plain: "Plain"
+        }
     }
 }
 

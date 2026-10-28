@@ -68,6 +68,10 @@ public struct SottoSettings: Codable, Equatable, Sendable {
     public var skipApps: [AppRef] = []
     /// Shows the transcribed text in the pill while dictating.
     public var showLiveText = true
+    /// Shapes capitalization and punctuation for the app the text goes into.
+    public var matchStyleToApp = true
+    /// The user's per-app styles, overriding the built-in defaults.
+    public var styleRules: [StyleRule] = []
 
     public init() {}
 
@@ -97,6 +101,8 @@ public struct SottoSettings: Codable, Equatable, Sendable {
         mouseButton = value(.mouseButton, defaults.mouseButton)
         skipApps = value(.skipApps, defaults.skipApps)
         showLiveText = value(.showLiveText, defaults.showLiveText)
+        matchStyleToApp = value(.matchStyleToApp, defaults.matchStyleToApp)
+        styleRules = value(.styleRules, defaults.styleRules)
     }
 
     /// Decodes settings, falling back to defaults if the data isn't JSON at all.

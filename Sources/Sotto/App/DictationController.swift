@@ -82,6 +82,7 @@ final class DictationController {
     @ObservationIgnored private var recordingPeak: Float = 0
     @ObservationIgnored private var liveText = ""
     @ObservationIgnored private var pressReturnAfterInsert = false
+    @ObservationIgnored private var appendSpaceAfterInsert = true
 
     init(store: SettingsStore, history: HistoryStore) {
         self.store = store
@@ -389,6 +390,11 @@ final class DictationController {
         (self.live, liveInput, self.liveFeed) = (nil, nil, nil)
         let cleanup = (removeFillers: settings.removeFillerWords, words: settings.customWords)
         let rules = (replacements: settings.replacements, snippets: settings.snippets, sayToSend: settings.sayToSend)
+        // The style follows the app in front when the key goes up.
+        let style = settings.matchStyleToApp
+            ? Styles.style(forBundleID: NSWorkspace.shared.frontmostApplication?.bundleIdentifier, rules: settings.styleRules)
+            : .standard
+        appendSpaceAfterInsert = style.appendsSpace
         // Read now, before the paste replaces the clipboard.
         let clipboard = rules.snippets.contains { $0.text.contains("{clipboard}") }
             ? NSPasteboard.general.string(forType: .string) : nil
@@ -408,8 +414,10 @@ final class DictationController {
                     Self.milliseconds(result.transcribeTail), result.usedFallback ? " · whole-recording fallback" : ""
                 )
                 let cleaned = TextCleanup.clean(result.text, removeFillers: cleanup.removeFillers, customWords: cleanup.words)
+                // Style first, so replacements and snippets come out exactly as written.
+                let styled = Styles.apply(cleaned, style: style, keepCapitalized: cleanup.words)
                 let final = TextRules.apply(
-                    cleaned, replacements: rules.replacements, snippets: rules.snippets,
+                    styled, replacements: rules.replacements, snippets: rules.snippets,
                     sayToSend: rules.sayToSend, clipboard: clipboard
                 )
                 self.pressReturnAfterInsert = final.send
@@ -429,8 +437,9 @@ final class DictationController {
             // In hands-free mode the stopping press is still down; wait for it.
             await hotkey.waitForRelease()
             let insertStart = ProcessInfo.processInfo.systemUptime
-            // A trailing space keeps back-to-back dictations from running together.
-            let outcome = await inserter.insert(text + " ")
+            // A trailing space keeps back-to-back dictations from running
+            // together; code editors and terminals don't get one.
+            let outcome = await inserter.insert(text + (appendSpaceAfterInsert ? " " : ""))
             endSignpost()
             var pasteMs: Int?
             let target = appName ?? "unknown app"
