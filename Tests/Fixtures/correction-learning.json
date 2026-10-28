@@ -1,0 +1,15 @@
+{
+  "description": "Shared cases for learning a dictionary word from a hand edit. before is the field right after the paste, after is the field once the user stopped typing, inserted is what Sotto pasted. expected null means nothing is learned. Every Sotto implementation must pass these.",
+  "cases": [
+    { "before": "Let's ask Furcan about it.", "after": "Let's ask Furkan about it.", "inserted": "Let's ask Furcan about it.", "expected": "Furkan" },
+    { "before": "We use Charge B for billing.", "after": "We use ChargeBee for billing.", "inserted": "We use Charge B for billing.", "expected": "ChargeBee" },
+    { "before": "Notes so far. The model is GPT for.", "after": "Notes so far. The model is GPT4.", "inserted": "The model is GPT for.", "expected": "GPT4" },
+    { "before": "Let's ask Furcan about it.", "after": "Let's ask Furkan about it.", "inserted": "Let's ask Furcan about it.", "known": ["Furkan"], "expected": null },
+    { "before": "I put it over their.", "after": "I put it over there.", "inserted": "I put it over their.", "expected": null },
+    { "before": "Let's ask Furcan about it.", "after": "Let's ask the whole team about it.", "inserted": "Let's ask Furcan about it.", "expected": null },
+    { "before": "Old line by Furcan. New dictated text.", "after": "Old line by Furkan. New dictated text.", "inserted": "New dictated text.", "expected": null },
+    { "before": "Send it to Ali today.", "after": "Send it to Mehmet today.", "inserted": "Send it to Ali today.", "expected": null },
+    { "before": "Let's ask Furcan about it.", "after": "Let's ask Furcan about it.", "inserted": "Let's ask Furcan about it.", "expected": null },
+    { "before": "Meet at the cafe.", "after": "Meet at the Cafe.", "inserted": "Meet at the cafe.", "expected": null }
+  ]
+}

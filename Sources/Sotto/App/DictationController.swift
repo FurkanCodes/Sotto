@@ -62,6 +62,8 @@ final class DictationController {
     @ObservationIgnored private let voice = VoiceDetector()
     @ObservationIgnored private let inserter = TextInserter()
     @ObservationIgnored private let pill = PillController()
+    @ObservationIgnored private let fieldWatcher = FieldWatcher()
+    @ObservationIgnored private let suggestion = SuggestionPanel()
 
     @ObservationIgnored private var micReady = false
     @ObservationIgnored private var breakdown = ""
@@ -115,6 +117,7 @@ final class DictationController {
     }
 
     func start() {
+        fieldWatcher.onLearned = { [weak self] word in self?.offerToLearn(word) }
         hotkey.key = settings.dictationKey
         hotkey.mouseButton = settings.mouseButton
         history.prune(retentionDays: settings.historyRetentionDays)
@@ -297,6 +300,8 @@ final class DictationController {
             return
         }
         unloadTask?.cancel()
+        fieldWatcher.stop()
+        suggestion.hide()
         inserter.prepare()
         micReady = false
         recordingPeak = 0
@@ -459,6 +464,13 @@ final class DictationController {
                 // Notice level, so macOS keeps it long enough to diagnose problems.
                 Log.app.notice("insert \(method.rawValue, privacy: .public) into \(target, privacy: .public): release→paste \(toPaste) ms, release→landed \(toLanded) ms · \(self.breakdown, privacy: .public)")
                 pill.hide()
+                if settings.learnFromCorrections {
+                    // Give the app a moment to show the pasted text, then watch for fixes.
+                    try? await Task.sleep(for: .milliseconds(300))
+                    if machine.phase == .idle {
+                        fieldWatcher.watch(inserted: text, knownWords: settings.customWords)
+                    }
+                }
             case .leftOnClipboard:
                 Log.app.notice("insert failed in \(target, privacy: .public): no text field took it; left on clipboard")
                 pill.flash("Copied. Press ⌘V to paste.", isError: true)
@@ -476,6 +488,15 @@ final class DictationController {
             )
             onChange?()
             scheduleUnload()
+        }
+    }
+
+    private func offerToLearn(_ word: String) {
+        guard machine.phase == .idle else { return }
+        Log.app.notice("Offering a learned dictionary word")
+        suggestion.offer(word, position: settings.pillPosition) { [weak self] in
+            guard let self, !self.store.settings.customWords.contains(where: { $0.caseInsensitiveCompare(word) == .orderedSame }) else { return }
+            self.store.settings.customWords.append(word)
         }
     }
 

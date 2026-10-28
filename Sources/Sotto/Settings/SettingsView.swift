@@ -404,6 +404,10 @@ private struct DictionaryPane: View {
                         self.handyWords = []
                     }
                 }
+                Toggle(isOn: $store.settings.learnFromCorrections) {
+                    Text("Learn from my corrections")
+                    Text("If you fix a dictated name or term by hand, Sotto offers to add it here. The text field is read only in memory, for 20 seconds after a paste, and never in password fields.")
+                }
             } header: {
                 Text("Custom words")
             } footer: {

@@ -25,7 +25,7 @@ Built in-house, with rules instead of an AI model: 13, 12 and 17, in that order.
 - [ ] 14. *(On hold: needs an AI model.)* **Custom modes:** "Polish", "Make it shorter", "Write as a prompt", "Translate to English", each with its own key or spoken trigger.
 - [ ] 15. *(On hold: needs an AI model.)* **Voice editing:** select text and say "make this more formal".
 - [ ] 16. **Context awareness:** knowing the app drives 13. Rewriting from the surrounding text is on hold, because it needs an AI model.
-- [ ] 17. **The dictionary learns:** after a paste, Sotto watches the field briefly; if you fix a word, it offers to add it.
+- [x] 17. **The dictionary learns:** after a paste, Sotto watches the field briefly; if you fix a word, it offers to add it.
 
 ## C. Plugins (separate system, designed later)
 

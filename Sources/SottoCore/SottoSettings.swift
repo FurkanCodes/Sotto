@@ -74,6 +74,8 @@ public struct SottoSettings: Codable, Equatable, Sendable {
     public var styleRules: [StyleRule] = []
     /// "at 2, actually 3" → "at 3", for clear corrections of numbers, days and names.
     public var fixSelfCorrections = true
+    /// Offers words the user fixes by hand right after dictating for the dictionary.
+    public var learnFromCorrections = true
 
     public init() {}
 
@@ -106,6 +108,7 @@ public struct SottoSettings: Codable, Equatable, Sendable {
         matchStyleToApp = value(.matchStyleToApp, defaults.matchStyleToApp)
         styleRules = value(.styleRules, defaults.styleRules)
         fixSelfCorrections = value(.fixSelfCorrections, defaults.fixSelfCorrections)
+        learnFromCorrections = value(.learnFromCorrections, defaults.learnFromCorrections)
     }
 
     /// Decodes settings, falling back to defaults if the data isn't JSON at all.
