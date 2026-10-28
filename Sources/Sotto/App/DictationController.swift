@@ -388,7 +388,7 @@ final class DictationController {
         }
         liveInput?.finish()
         (self.live, liveInput, self.liveFeed) = (nil, nil, nil)
-        let cleanup = (removeFillers: settings.removeFillerWords, words: settings.customWords)
+        let cleanup = (removeFillers: settings.removeFillerWords, words: settings.customWords, corrections: settings.fixSelfCorrections)
         let rules = (replacements: settings.replacements, snippets: settings.snippets, sayToSend: settings.sayToSend)
         // The style follows the app in front when the key goes up.
         let style = settings.matchStyleToApp
@@ -414,8 +414,9 @@ final class DictationController {
                     Self.milliseconds(result.transcribeTail), result.usedFallback ? " · whole-recording fallback" : ""
                 )
                 let cleaned = TextCleanup.clean(result.text, removeFillers: cleanup.removeFillers, customWords: cleanup.words)
+                let corrected = cleanup.corrections ? SelfCorrection.apply(cleaned) : cleaned
                 // Style first, so replacements and snippets come out exactly as written.
-                let styled = Styles.apply(cleaned, style: style, keepCapitalized: cleanup.words)
+                let styled = Styles.apply(corrected, style: style, keepCapitalized: cleanup.words)
                 let final = TextRules.apply(
                     styled, replacements: rules.replacements, snippets: rules.snippets,
                     sayToSend: rules.sayToSend, clipboard: clipboard

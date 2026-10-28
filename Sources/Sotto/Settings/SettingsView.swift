@@ -84,6 +84,10 @@ private struct GeneralPane: View {
                     Text("Remove filler words")
                     Text("Takes out um, uh and hmm.")
                 }
+                Toggle(isOn: $store.settings.fixSelfCorrections) {
+                    Text("Fix spoken corrections")
+                    Text("“At 2, actually 3” becomes “at 3”. Only clear corrections of numbers, days and names.")
+                }
                 Toggle(isOn: $store.settings.sayToSend) {
                     Text("Say “send it” to press Return")
                     Text("End a dictation with “send it” to send the message.")
