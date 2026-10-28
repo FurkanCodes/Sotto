@@ -65,3 +65,7 @@ Sotto stands on open-source work:
 - Models from NVIDIA, OpenAI, the Silero team and others, each under its own license.
 
 Full notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## License
+
+MIT, see [LICENSE](LICENSE). Third-party code and models keep their own licenses.
