@@ -180,12 +180,17 @@ final class DictationController {
         signpostState = Log.signposter.beginInterval("dictation", id: Log.signposter.makeSignpostID())
 
         // Load while the user talks, so the model is ready when they let go.
+        // If it's already loaded, wake the Neural Engine instead: live
+        // transcription measured 88 ms against 45 ms when the engine was busy.
         Task { [engine, voice] in
+            let wasLoaded = await engine.isLoaded
             try? await voice.load()
+            await voice.warmUp()
             do {
                 try await engine.load()
                 self.modelReady = true
                 self.refreshPill()
+                if wasLoaded { await engine.warmUp() }
             } catch {
                 Log.app.error("Model load failed: \(error.localizedDescription, privacy: .public)")
             }

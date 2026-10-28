@@ -70,4 +70,13 @@ actor ParakeetEngine: SpeechEngine {
         await manager?.cleanup()
         manager = nil
     }
+
+    /// Runs one second of silence through the loaded model. Called when the
+    /// user presses the key, so the Neural Engine is awake by the time they
+    /// let go. Does nothing if the model isn't loaded.
+    func warmUp() async {
+        guard let manager else { return }
+        var state = TdtDecoderState.make(decoderLayers: await manager.decoderLayerCount)
+        _ = try? await manager.transcribe([Float](repeating: 0, count: Self.sampleRate), decoderState: &state)
+    }
 }

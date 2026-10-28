@@ -50,3 +50,20 @@ Signed build, a real mic, right Option push-to-talk, pasting into a text field. 
 - no network sockets.
 
 **Live transcription is slower than the headless test** (88 ms against 45 ms for a similar length). The likely cause is the Neural Engine waking from idle, which is unverified. The next step tests a warm-up on key-down.
+
+## 2026-10-28: Idle slowdown and the key-down warm-up
+
+Headless, 4.6 s clip, `--gap` = idle seconds before each run, `--warm-lead` = warm-up seconds before each run.
+
+| Condition | Voice detection | Transcription |
+|---|---|---|
+| Back-to-back (no idle) | 4 ms | 42–48 ms |
+| 15 s idle, no warm-up | 13–17 ms | 123–134 ms |
+| 15 s idle, warm-up 2 s before | 9–14 ms | 57–91 ms |
+| 10 s idle, warm-up 1 s before | 11–16 ms | 58–68 ms |
+| 10 s idle, warm-up 0.5 s before | 8–15 ms | 54–91 ms |
+| 10 s idle, warm-up 0.25 s before | 12–14 ms | 88–104 ms |
+
+**Conclusion:** after idle, the pipeline is about 3x slower. The key-down warm-up recovers about half of that. It doesn't reach back-to-back speed, because the hardware is fastest while it's continuously busy.
+
+**Next step (Phase 2):** process audio in chunks while the user is still talking, so the hardware stays busy and only the tail is left at release.

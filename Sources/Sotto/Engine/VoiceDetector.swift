@@ -20,6 +20,11 @@ actor VoiceDetector {
         manager = nil
     }
 
+    /// Runs one model window of silence, so detection starts warm after release.
+    func warmUp() async {
+        _ = try? await manager?.process([Float](repeating: 0, count: VadManager.chunkSize))
+    }
+
     /// The speech parts of `samples`, each padded by 450 ms like Handy
     /// (audio_toolkit/vad). Returns nil when there is no speech at all.
     /// If detection isn't available or fails, everything counts as speech.
