@@ -1,0 +1,16 @@
+{
+  "description": "Shared cases for replacements, snippets and the spoken 'send it'. The date is 2026-10-28 and the clipboard holds 'https://example.com/call'. Every Sotto implementation must pass these.",
+  "cases": [
+    { "input": "Send it to my gee mail please.", "replacements": [["gee mail", "Gmail"]], "expected": "Send it to my Gmail please.", "send": false },
+    { "input": "Visit sotto dot com today.", "replacements": [["dot com", ".com"], ["sotto .com", "sotto.com"]], "expected": "Visit sotto.com today.", "send": false },
+    { "input": "The dotcom bubble.", "replacements": [["dot com", ".com"]], "expected": "The dotcom bubble.", "send": false },
+    { "input": "My address.", "snippets": [["my address", "Kadıköy, Istanbul"]], "expected": "Kadıköy, Istanbul", "send": false },
+    { "input": "Ship it to my address please.", "snippets": [["my address", "Kadıköy, Istanbul"]], "expected": "Ship it to Kadıköy, Istanbul please.", "send": false },
+    { "input": "Here's the call link: meeting link.", "snippets": [["meeting link", "{clipboard}"]], "expected": "Here's the call link: https://example.com/call.", "send": false },
+    { "input": "See you tomorrow. Send it.", "expected": "See you tomorrow.", "send": true },
+    { "input": "Sounds good, send it", "expected": "Sounds good", "send": true },
+    { "input": "Please send it to Ali tomorrow.", "expected": "Please send it to Ali tomorrow.", "send": false },
+    { "input": "See you tomorrow. Send it.", "sayToSend": false, "expected": "See you tomorrow. Send it.", "send": false },
+    { "input": "Send it.", "expected": "", "send": true }
+  ]
+}

@@ -8,6 +8,11 @@ struct SottoSettingsTests {
         settings.dictationKey = .fn
         settings.customWords = ["Furkan", "Sotto"]
         settings.microphoneUID = "BuiltInMicrophoneDevice"
+        settings.snippets = [Snippet(trigger: "my email", text: "me@example.com")]
+        settings.replacements = [Replacement(from: "gee mail", to: "Gmail")]
+        settings.autoSendApps = [AutoSendRule(app: AppRef(bundleID: "com.tinyspeck.slackmacgap", name: "Slack"))]
+        settings.skipApps = [AppRef(bundleID: "com.1password.1password", name: "1Password")]
+        settings.mouseButton = 3
         #expect(SottoSettings.decode(try settings.encoded()) == settings)
     }
 
