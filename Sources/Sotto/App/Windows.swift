@@ -46,7 +46,7 @@ final class Windows {
                 root: HistoryView(history: controller.history, retentionDays: controller.store.settings.historyRetentionDays),
                 style: [.titled, .closable, .miniaturizable, .resizable]
             ) { [weak self] in self?.history = nil }
-            history?.setContentSize(NSSize(width: 640, height: 600))
+            history?.setContentSize(NSSize(width: 620, height: 640))
         }
         present(history)
     }

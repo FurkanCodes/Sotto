@@ -4,7 +4,7 @@ import SwiftUI
 
 struct SettingsView: View {
     enum Pane: String, CaseIterable, Identifiable {
-        case general, shortcut, models, dictionary, privacy, about
+        case general, shortcut, models, dictionary, history, privacy, about
         var id: Self { self }
 
         var title: String {
@@ -13,6 +13,7 @@ struct SettingsView: View {
             case .shortcut: "Shortcut"
             case .models: "Models"
             case .dictionary: "Dictionary"
+            case .history: "History"
             case .privacy: "Privacy"
             case .about: "About"
             }
@@ -24,6 +25,7 @@ struct SettingsView: View {
             case .shortcut: "keyboard"
             case .models: "cpu"
             case .dictionary: "book.closed"
+            case .history: "clock.arrow.circlepath"
             case .privacy: "lock"
             case .about: "info.circle"
             }
@@ -46,6 +48,7 @@ struct SettingsView: View {
                 case .shortcut: ShortcutPane(store: controller.store)
                 case .models: ModelsPane(controller: controller, store: controller.store)
                 case .dictionary: DictionaryPane(store: controller.store)
+                case .history: HistoryView(history: controller.history, retentionDays: controller.store.settings.historyRetentionDays)
                 case .privacy: PrivacyPane(controller: controller)
                 case .about: AboutPane()
                 }

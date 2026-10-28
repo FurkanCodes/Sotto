@@ -34,57 +34,47 @@ struct HistoryView: View {
 
     var body: some View {
         let week = history.stats.week(endingOn: Date())
-        VStack(spacing: 0) {
-            HStack(spacing: 28) {
-                stat("This week", "\(week.words.formatted()) words")
-                stat("Time saved", "\(Int(UsageStats.minutesSaved(week).rounded())) min")
-                stat("Dictations", week.dictations.formatted())
-                Spacer()
+        Form {
+            Section("This week") {
+                HStack(spacing: 0) {
+                    stat("Words", week.words.formatted())
+                    Divider().frame(height: 32)
+                    stat("Time saved", "\(Int(UsageStats.minutesSaved(week).rounded())) min")
+                    Divider().frame(height: 32)
+                    stat("Dictations", week.dictations.formatted())
+                }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
 
-            HStack {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("Search dictations", text: $search).textFieldStyle(.plain)
+            Section {
+                TextField("Search dictations", text: $search, prompt: Text("Search dictations"))
+                    .labelsHidden()
             }
-            .padding(8)
-            .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
-            .padding(.horizontal, 20)
-            .padding(.bottom, 12)
-
-            Divider()
 
             if filtered.isEmpty {
-                ContentUnavailableView(
-                    search.isEmpty ? "No dictations yet" : "No matches",
-                    systemImage: search.isEmpty ? "text.bubble" : "magnifyingglass",
-                    description: Text(search.isEmpty ? emptyHint : "Try another word.")
-                )
+                Section {
+                    Text(search.isEmpty ? emptyHint : "No dictations match “\(search)”.")
+                        .foregroundStyle(.secondary)
+                }
             } else {
-                List {
-                    ForEach(days, id: \.title) { day in
-                        Section(day.title) {
-                            ForEach(day.entries) { entry in
-                                HistoryRow(entry: entry, history: history)
-                            }
+                ForEach(days, id: \.title) { day in
+                    Section(day.title) {
+                        ForEach(day.entries) { entry in
+                            HistoryRow(entry: entry, history: history)
                         }
                     }
                 }
-                .listStyle(.inset)
             }
 
-            Divider()
-            HStack {
-                Text(retentionText).font(.callout).foregroundStyle(.secondary)
-                Spacer()
-                Button("Clear History…") { confirmingClear = true }
-                    .disabled(history.entries.allSatisfy(\.starred))
+            Section {
+                HStack {
+                    Text(retentionText).font(.callout).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Clear History…") { confirmingClear = true }
+                        .disabled(history.entries.allSatisfy(\.starred))
+                }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
         }
-        .frame(minWidth: 560, minHeight: 480)
+        .formStyle(.grouped)
         .confirmationDialog("Clear your dictation history?", isPresented: $confirmingClear) {
             Button("Clear History", role: .destructive) { history.clearUnstarred() }
         } message: {
@@ -108,10 +98,11 @@ struct HistoryView: View {
     }
 
     private func stat(_ label: String, _ value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(spacing: 2) {
             Text(value).font(.system(size: 20, weight: .semibold).monospacedDigit())
             Text(label).font(.callout).foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity)
     }
 }
 
