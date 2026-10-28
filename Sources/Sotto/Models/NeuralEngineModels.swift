@@ -19,6 +19,8 @@ struct NeuralModel: Decodable, Hashable, Sendable {
         case parakeetV2 = "parakeet-v2"
         case parakeetUltra = "parakeet-ultra"
         case parakeetTdtCtc110m = "parakeet-tdt-ctc-110m"
+        /// The built-in Parakeet v3 and the voice detector.
+        case builtIn = "built-in"
     }
 
     let catalogID: String
@@ -75,18 +77,36 @@ struct NeuralModel: Decodable, Hashable, Sendable {
 }
 
 enum NeuralEngineModels {
-    static let all: [NeuralModel] = {
-        struct Root: Decodable { let models: [NeuralModel] }
+    private struct Root: Decodable {
+        let models: [NeuralModel]
+        let builtIn: [NeuralModel]
+    }
+
+    private static let root: Root? = {
         guard let url = Bundle.main.url(forResource: "neural-engine-models", withExtension: "json"),
-              let data = try? Data(contentsOf: url),
-              let root = try? JSONDecoder().decode(Root.self, from: data)
-        else { return [] }
-        return root.models
+              let data = try? Data(contentsOf: url)
+        else { return nil }
+        return try? JSONDecoder().decode(Root.self, from: data)
     }()
+
+    /// Catalog models with a Neural Engine build.
+    static var all: [NeuralModel] { root?.models ?? [] }
 
     static func model(for catalogID: String) -> NeuralModel? {
         all.first { $0.catalogID == catalogID }
     }
+
+    /// The built-in Parakeet v3 ("parakeet-tdt-0.6b-v3") and the voice detector ("silero-vad").
+    static func builtIn(_ id: String) -> NeuralModel? {
+        root?.builtIn.first { $0.catalogID == id }
+    }
+
+    /// Where pinned model folders live: Application Support/Sotto/Models.
+    static let folder: URL = {
+        let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        return support.appendingPathComponent("Sotto/Models", isDirectory: true)
+    }()
 }
 
 enum Hardware {

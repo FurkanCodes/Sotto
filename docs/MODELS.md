@@ -43,8 +43,8 @@ Measurements behind this table are in [measurements.md](measurements.md). Measur
 Every model downloads from Hugging Face at a fixed commit and is checked with SHA-256 before Sotto uses it:
 
 - GPU builds: `Resources/model-catalog.json`.
-- Neural Engine builds: `Resources/neural-engine-models.json`, written by `scripts/pin-neural-models.py`, which lists each file's size and SHA-256. Sotto downloads these files itself; FluidAudio only loads them.
+- Neural Engine builds, the built-in model and the voice detector: `Resources/neural-engine-models.json`, written by `scripts/pin-neural-models.py`, which lists each file's size and SHA-256. Sotto downloads these files itself; FluidAudio only loads them.
 
 To move a Neural Engine build to a newer upstream version, run `scripts/pin-neural-models.py --refresh`, measure it again, and review the diff.
 
-**Not yet pinned:** the built-in Parakeet v3 and the Silero voice detector still download through FluidAudio's own downloader, which fetches the latest upstream version and checks only file sizes. Moving them onto the same pinned, checked path is still to do.
+The built-in Parakeet v3 and the Silero voice detector use the same pinned, checked path (the `builtIn` list in that file). Installs from before that change move over without a download: files FluidAudio cached earlier are reused when their SHA-256 matches the pin.

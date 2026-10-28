@@ -27,17 +27,25 @@ actor ParakeetEngine: SpeechEngine {
 
     var isLoaded: Bool { manager != nil }
 
+    /// The pinned files (neural-engine-models.json, "builtIn").
+    private static let pinned = NeuralEngineModels.builtIn("parakeet-tdt-0.6b-v3")
+
     nonisolated var isDownloaded: Bool {
-        AsrModels.modelsExist(at: directory, version: Self.version)
+        ModelDownload.isComplete(directory)
     }
 
     nonisolated var directory: URL {
-        AsrModels.defaultCacheDirectory(for: Self.version)
+        NeuralEngineModels.folder.appendingPathComponent(Self.pinned?.folderName ?? "parakeet-tdt-0.6b-v3", isDirectory: true)
     }
 
-    /// The one network call Sotto makes: fetching the pinned model files.
+    /// The one network call Sotto makes: fetching the pinned model files and
+    /// checking each one's SHA-256. Files FluidAudio cached for an earlier
+    /// version of Sotto are reused when they match.
     func download(progress: @escaping @Sendable (Double) -> Void) async throws {
-        try await AsrModels.download(version: Self.version) { progress($0.fractionCompleted) }
+        guard let pinned = Self.pinned else { throw EngineError.notLoaded }
+        try await ModelDownload.installPinned(
+            pinned, at: directory, reuse: AsrModels.defaultCacheDirectory(for: Self.version), progress: progress
+        )
     }
 
     func load() async throws {
@@ -46,8 +54,11 @@ actor ParakeetEngine: SpeechEngine {
             manager = try await loading.value
             return
         }
+        let directory = self.directory
+        let needsDownload = !isDownloaded
         let task = Task { () throws -> AsrManager in
-            let models = try await AsrModels.downloadAndLoad(version: Self.version)
+            if needsDownload { try await self.download { _ in } }
+            let models = try AsrModels.loadLocal(from: directory, version: Self.version)
             let asr = AsrManager(config: .default)
             try await asr.loadModels(models)
             // The first run after a load is slower; pay for it now, while the

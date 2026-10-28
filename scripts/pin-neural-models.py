@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Writes Resources/neural-engine-models.json: the CoreML models Sotto runs on
-the Neural Engine through FluidAudio, each pinned to a Hugging Face commit with
+the Neural Engine through FluidAudio (catalog models, plus the built-in
+Parakeet v3 and the Silero voice detector), each pinned to a Hugging Face commit with
 the size and SHA-256 of every file it needs. Sotto downloads exactly these
 files and checks each hash before loading, so a change upstream can't reach a
 user until this script is run again and the result reviewed.
@@ -72,6 +73,23 @@ MODELS = [
         "paths": ["Preprocessor.mlmodelc", "Decoder.mlmodelc", "JointDecision.mlmodelc", "parakeet_vocab.json"],
     },
 ]
+# The built-in model and the voice detector, which every install needs.
+BUILT_IN = [
+    {
+        "catalogID": "parakeet-tdt-0.6b-v3",
+        "engine": "built-in",
+        "repository": "FluidInference/parakeet-tdt-0.6b-v3-coreml",
+        "paths": ["Preprocessor.mlmodelc", "Encoder.mlmodelc", "Decoder.mlmodelc", "JointDecisionv3.mlmodelc",
+                  "parakeet_v3_vocab.json", "parakeet_vocab.json"],
+    },
+    {
+        "catalogID": "silero-vad",
+        "engine": "built-in",
+        "repository": "FluidInference/silero-vad-coreml",
+        "paths": ["silero-vad-unified-256ms-v6.2.1.mlmodelc"],
+    },
+]
+
 # Not here, and why (docs/MODELS.md):
 # - cohere-transcribe-03-2026: FluidAudio's CoreML build took 22 s for a 4.6 s
 #   clip on the Neural Engine (GPU build: 0.13 s).
@@ -129,17 +147,23 @@ def main():
     refresh = "--refresh" in sys.argv
     old = {}
     if os.path.exists(OUT):
-        old = {m["catalogID"]: m for m in json.load(open(OUT))["models"]}
-    models = []
-    for spec in MODELS:
-        previous = old.get(spec["catalogID"])
-        keep = previous and not refresh and previous["repository"] == spec["repository"]
-        pinned = pin(spec, previous["revision"] if keep else None)
-        print(f'{pinned["catalogID"]}: {pinned["repository"]}@{pinned["revision"][:10]}, '
-              f'{len(pinned["files"])} files, {pinned["size"] / 1e6:.0f} MB')
-        models.append(pinned)
+        existing = json.load(open(OUT))
+        old = {m["catalogID"]: m for m in existing["models"] + existing.get("builtIn", [])}
+
+    def pin_all(specs):
+        pinned_list = []
+        for spec in specs:
+            previous = old.get(spec["catalogID"])
+            keep = previous and not refresh and previous["repository"] == spec["repository"]
+            pinned = pin(spec, previous["revision"] if keep else None)
+            print(f'{pinned["catalogID"]}: {pinned["repository"]}@{pinned["revision"][:10]}, '
+                  f'{len(pinned["files"])} files, {pinned["size"] / 1e6:.0f} MB')
+            pinned_list.append(pinned)
+        return pinned_list
+
+    result = {"models": pin_all(MODELS), "builtIn": pin_all(BUILT_IN)}
     with open(OUT, "w") as out:
-        json.dump({"models": models}, out, indent=1)
+        json.dump(result, out, indent=1)
         out.write("\n")
 
 

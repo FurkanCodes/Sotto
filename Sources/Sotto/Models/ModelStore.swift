@@ -1,4 +1,3 @@
-import CryptoKit
 import Foundation
 import Observation
 import SottoCore
@@ -49,14 +48,9 @@ final class ModelStore {
     func isInstalled(_ model: CatalogModel) -> Bool {
         _ = revision
         guard let path = path(for: model) else { return false }
-        if neural(for: model) != nil {
-            return FileManager.default.fileExists(atPath: path.appendingPathComponent(Self.completeMarker).path)
-        }
+        if neural(for: model) != nil { return ModelDownload.isComplete(path) }
         return FileManager.default.fileExists(atPath: path.path)
     }
-
-    /// Written into a Neural Engine model's folder once every file has passed its check.
-    private static let completeMarker = ".complete"
 
     var installed: [CatalogModel] {
         ModelCatalog.models.filter(isInstalled)
@@ -74,14 +68,13 @@ final class ModelStore {
                 try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
                 let staged = target.appendingPathExtension("partial")
                 try? FileManager.default.removeItem(at: staged)
-                try await Self.fetch(url, to: staged) { fraction in
+                try await ModelDownload.fetch(url, to: staged) { fraction in
                     Task { @MainActor in self?.downloads[model.id] = .running(fraction) }
                 }
                 await MainActor.run { self?.downloads[model.id] = .checking }
-                let hash = try await Task.detached { try Self.sha256(of: staged) }.value
-                guard hash == file.sha256 else {
+                guard try await ModelDownload.sha256(staged) == file.sha256 else {
                     try? FileManager.default.removeItem(at: staged)
-                    throw DownloadError.checksum
+                    throw ModelDownload.Failure.checksum
                 }
                 try? FileManager.default.removeItem(at: target)
                 try FileManager.default.moveItem(at: staged, to: target)
@@ -98,42 +91,19 @@ final class ModelStore {
         }
     }
 
-    /// Fetches each pinned file into a staging folder and checks its SHA-256,
-    /// then moves the folder into place, so a partial download is never used.
     private func downloadNeural(_ model: CatalogModel, _ neural: NeuralModel) {
         guard tasks[model.id] == nil, let target = path(for: model) else { return }
         downloads[model.id] = .running(0)
-        let staged = target.appendingPathExtension("partial")
         tasks[model.id] = Task { [weak self] in
             do {
-                try? FileManager.default.removeItem(at: staged)
-                var done: Int64 = 0
-                for file in neural.files {
-                    try Task.checkCancellation()
-                    guard let url = neural.url(for: file) else { throw URLError(.badURL) }
-                    let destination = staged.appendingPathComponent(neural.localPath(for: file))
-                    try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
-                    let before = done
-                    try await Self.fetch(url, to: destination) { fraction in
-                        let overall = (Double(before) + fraction * Double(file.size)) / Double(max(neural.size, 1))
-                        Task { @MainActor in self?.downloads[model.id] = .running(overall) }
-                    }
-                    let hash = try await Task.detached { try Self.sha256(of: destination) }.value
-                    guard hash == file.sha256 else {
-                        try? FileManager.default.removeItem(at: staged)
-                        throw DownloadError.checksum
-                    }
-                    done += file.size
+                try await ModelDownload.installPinned(neural, at: target) { fraction in
+                    Task { @MainActor in self?.downloads[model.id] = .running(fraction) }
                 }
-                FileManager.default.createFile(atPath: staged.appendingPathComponent(Self.completeMarker).path, contents: Data())
-                try? FileManager.default.removeItem(at: target)
-                try FileManager.default.moveItem(at: staged, to: target)
                 await MainActor.run {
                     self?.downloads[model.id] = nil
                     self?.revision += 1
                 }
             } catch is CancellationError {
-                try? FileManager.default.removeItem(at: staged)
                 await MainActor.run { self?.downloads[model.id] = nil }
             } catch {
                 await MainActor.run { self?.downloads[model.id] = .failed(error.localizedDescription) }
@@ -152,71 +122,4 @@ final class ModelStore {
         if let build = model.neuralBuild { try? FileManager.default.removeItem(at: folder.appendingPathComponent(build.folderName)) }
         revision += 1
     }
-
-    enum DownloadError: LocalizedError {
-        case checksum
-        case http(Int)
-
-        var errorDescription: String? {
-            switch self {
-            case .checksum: "The download was damaged. Try again."
-            case .http(let code): "The download failed (HTTP \(code))."
-            }
-        }
-    }
-
-    // MARK: - Work off the main thread
-
-    private nonisolated static func fetch(_ url: URL, to destination: URL, progress: @escaping @Sendable (Double) -> Void) async throws {
-        let box = TaskBox()
-        try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                let task = URLSession.shared.downloadTask(with: url) { temporary, response, error in
-                    box.observation?.invalidate()
-                    if let error {
-                        continuation.resume(throwing: (error as? URLError)?.code == .cancelled ? CancellationError() : error)
-                        return
-                    }
-                    if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-                        continuation.resume(throwing: DownloadError.http(http.statusCode))
-                        return
-                    }
-                    guard let temporary else {
-                        continuation.resume(throwing: URLError(.badServerResponse))
-                        return
-                    }
-                    // The temporary file is deleted when this handler returns.
-                    do {
-                        try FileManager.default.moveItem(at: temporary, to: destination)
-                        continuation.resume()
-                    } catch {
-                        continuation.resume(throwing: error)
-                    }
-                }
-                box.task = task
-                box.observation = task.progress.observe(\.fractionCompleted) { value, _ in
-                    progress(value.fractionCompleted)
-                }
-                task.resume()
-            }
-        } onCancel: {
-            box.task?.cancel()
-        }
-    }
-
-    private nonisolated static func sha256(of url: URL) throws -> String {
-        let handle = try FileHandle(forReadingFrom: url)
-        defer { try? handle.close() }
-        var hasher = SHA256()
-        while let chunk = try handle.read(upToCount: 4 << 20), !chunk.isEmpty {
-            hasher.update(data: chunk)
-        }
-        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
-    }
-}
-
-/// Holds the download task so cancellation can reach it.
-private final class TaskBox: @unchecked Sendable {
-    var task: URLSessionDownloadTask?
-    var observation: NSKeyValueObservation?
 }

@@ -1,3 +1,4 @@
+import CoreML
 import FluidAudio
 
 /// Silero voice detection through FluidAudio. Cuts silence out of a recording
@@ -21,11 +22,29 @@ actor VoiceDetector {
 
     var isLoaded: Bool { manager != nil }
 
-    /// Downloads the model on first use.
+    /// The pinned files (neural-engine-models.json, "builtIn").
+    private static let pinned = NeuralEngineModels.builtIn("silero-vad")
+
+    private static var directory: URL {
+        NeuralEngineModels.folder.appendingPathComponent(pinned?.folderName ?? "silero-vad", isDirectory: true)
+    }
+
+    /// Installs the pinned model on first use (reusing FluidAudio's cached
+    /// copy from earlier versions when its hash matches), then loads it.
     func load() async throws {
-        if manager == nil {
-            manager = try await VadManager(config: .default)
+        guard manager == nil else { return }
+        guard let pinned = Self.pinned else { throw EngineError.notLoaded }
+        if !ModelDownload.isComplete(Self.directory) {
+            let cache = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+                .appendingPathComponent("FluidAudio/Models/silero-vad", isDirectory: true)
+            try await ModelDownload.installPinned(pinned, at: Self.directory, reuse: cache) { _ in }
         }
+        let configuration = MLModelConfiguration()
+        configuration.computeUnits = VadConfig.default.computeUnits
+        let model = try await MLModel.load(
+            contentsOf: Self.directory.appendingPathComponent(ModelNames.VAD.sileroVadFile), configuration: configuration
+        )
+        manager = VadManager(config: .default, vadModel: model)
     }
 
     func unload() {
