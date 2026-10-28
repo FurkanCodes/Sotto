@@ -24,14 +24,14 @@ Hold a key, speak, let go. Your words appear wherever you type.
 |---|---|
 | 🔒 **Private** | Runs entirely on your Mac. No account, no cloud, no telemetry. |
 | ⚡ **Fast** | Text lands about 0.1 s after you let go. [Measured](docs/measurements.md). |
-| 🔋 **Battery-friendly** | The built-in model runs on the Neural Engine, Apple's low-power chip for AI, not the CPU or GPU. |
+| 🔋 **Battery-friendly** | Models run on the Neural Engine, Apple's low-power chip for AI, whenever they can. |
 | 🪶 **Light** | Zero CPU while idle. The mic is on only while you hold the key. |
 
 ## Features
 
 - **Hold to talk:** right Option, right Command, Fn, or a mouse button. Tap for hands-free.
 - **Live text** in a small on-screen pill while you speak.
-- **74 models:** Parakeet v3 built in (25 languages, Neural Engine), plus Whisper Turbo, Nemotron, Parakeet Unified and more.
+- **73 models:** Parakeet v3 is built in (25 languages). It and five more, including Parakeet Unified and Nemotron 3.5, run on the Neural Engine; the rest, like Whisper Turbo, run on the GPU. [Which runs where](docs/MODELS.md).
 - **Clean output:** filler words removed, "at 2, actually 3" fixed to "at 3", style matched to each app.
 - **Your words:** a dictionary that learns from your corrections, replacements and snippets.
 - **Hands off:** say "send it" to press Return. Per-app auto-send.

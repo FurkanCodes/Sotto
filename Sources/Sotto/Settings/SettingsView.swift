@@ -362,7 +362,7 @@ private struct ModelsPane: View {
                         }
                     }
                 }
-                if let current, current.streams {
+                if let current, current.streams, models.neural(for: current) == nil {
                     Picker(selection: $store.settings.liveTextDelayMs) {
                         Text("Quickest, about 0.3 s").tag(320)
                         Text("Quick, about 0.5 s").tag(480)
@@ -386,12 +386,24 @@ private struct ModelsPane: View {
             }
 
             Section {
+                Picker(selection: $store.settings.modelEngine) {
+                    Text("Automatic").tag(ModelEngine.automatic)
+                    if Hardware.hasNeuralEngine {
+                        Text("Neural Engine, to save battery").tag(ModelEngine.neuralEngine)
+                    }
+                    Text("GPU, for the quickest live text").tag(ModelEngine.gpu)
+                } label: {
+                    Text("Run models on")
+                    Text(Hardware.hasNeuralEngine
+                        ? "Automatic uses the Neural Engine when a model has a build for it that works as well, and the GPU otherwise. Switching downloads the other build."
+                        : "This Mac has no Neural Engine, so models run on the GPU.")
+                }
                 TextField("Search by name or language, like Turkish", text: $search)
                 Toggle("Show all \(ModelCatalog.models.count) models", isOn: $showAll)
             } header: {
                 Text("More models")
             } footer: {
-                Text("These run on the GPU in a separate helper process. Each downloads once from Hugging Face and is checked before use.")
+                Text("Models marked Neural Engine run on Apple's low-power chip for AI; the rest run on the GPU in a separate helper process. Each downloads once from Hugging Face, pinned to a fixed version, and is checked before use.")
             }
 
             ForEach(Self.grouped(shown), id: \.title) { group in
@@ -410,7 +422,7 @@ private struct ModelsPane: View {
     private func details(_ model: CatalogModel) -> String {
         var parts = [model.languageSummary]
         if let parameters = model.parameters { parts.append(parameters + " parameters") }
-        parts.append("runs on the GPU")
+        parts.append(models.neural(for: model) != nil ? "runs on the Neural Engine to save battery" : "runs on the GPU")
         return parts.joined(separator: " · ")
     }
 
@@ -460,7 +472,8 @@ private struct ModelRow: View {
 
     private var subtitle: String {
         var parts = [model.languageSummary]
-        if let size = model.file?.size { parts.append(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)) }
+        if let size = models.downloadSize(for: model) { parts.append(ByteCountFormatter.string(fromByteCount: size, countStyle: .file)) }
+        if models.neural(for: model) != nil { parts.append("Neural Engine") }
         if model.capabilities?.streaming == true { parts.append("transcribes while you talk") }
         if let license = model.license { parts.append(license) }
         return parts.joined(separator: " · ")

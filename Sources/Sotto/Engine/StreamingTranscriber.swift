@@ -9,6 +9,21 @@ protocol LiveTranscribing: Actor {
     func cancel() async
 }
 
+/// An engine that transcribes as audio arrives: the SottoEngine helper on the
+/// GPU, or a Neural Engine model in the app. `id` tags one stream; calls with
+/// any other id are ignored.
+protocol StreamingSpeechEngine: SpeechEngine {
+    /// The engine's own lookahead, for engines with one fixed setting.
+    nonisolated var fixedLookaheadMs: Int? { get }
+    /// `lookaheadMs` is how long the model may wait before writing words;
+    /// engines with one fixed setting ignore it.
+    func beginStream(id: Int, lookaheadMs: Int) async throws
+    /// Feeds 16 kHz mono audio and returns the text so far.
+    func feedStream(id: Int, _ samples: [Float]) async throws -> String?
+    func finishStream(id: Int) async throws -> String
+    func cancelStream(id: Int) async
+}
+
 /// Transcribes one dictation as a live stream, for models built to stream
 /// (Nemotron, Parakeet Unified). The helper decodes the audio as it arrives,
 /// so at release only the model's last chunk is left, even when the user
@@ -23,7 +38,7 @@ actor StreamingTranscriber: LiveTranscribing {
     }
 
 
-    private let engine: HelperEngine
+    private let engine: any StreamingSpeechEngine
     private let voice: VoiceDetector
     private let id: Int
     private let lookaheadMs: Int
@@ -37,10 +52,11 @@ actor StreamingTranscriber: LiveTranscribing {
     private var state = State.notStarted
     private var lastText = ""
 
-    init(engine: HelperEngine, voice: VoiceDetector, id: Int, lookaheadMs: Int = 0, onText: (@Sendable (String) -> Void)? = nil) {
+    init(engine: any StreamingSpeechEngine, voice: VoiceDetector, id: Int, lookaheadMs: Int = 0, onText: (@Sendable (String) -> Void)? = nil) {
         self.engine = engine
         self.voice = voice
         self.id = id
+        let lookaheadMs = engine.fixedLookaheadMs ?? lookaheadMs
         self.lookaheadMs = lookaheadMs
         minFeed = lookaheadMs > 0 ? min(4096, max(1024, lookaheadMs * 16 / 4)) : 4096
         self.onText = onText

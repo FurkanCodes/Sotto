@@ -60,10 +60,14 @@ final class DictationController {
     @ObservationIgnored private let recorder = AudioRecorder()
     /// Parakeet v3 on the Neural Engine, built in and used by default.
     @ObservationIgnored private let builtIn = ParakeetEngine()
-    /// Catalog models, run by the SottoEngine helper process.
+    /// Catalog models, run by the SottoEngine helper process on the GPU.
     @ObservationIgnored private let helper = HelperEngine()
+    /// Catalog models with a Neural Engine build, run in the app through FluidAudio.
+    @ObservationIgnored private let neural = NeuralStreamEngine()
+    @ObservationIgnored private let neuralBatch = NeuralBatchEngine()
     @ObservationIgnored let models: ModelStore
-    @ObservationIgnored private var activeModelID: String?
+    /// The model and engine last prepared, to notice when either changes.
+    @ObservationIgnored private var activeModelKey: String?
     @ObservationIgnored private let voice = VoiceDetector()
     @ObservationIgnored private let inserter = TextInserter()
     @ObservationIgnored private let pill = PillController()
@@ -105,12 +109,35 @@ final class DictationController {
     }
 
     private var engine: any SpeechEngine {
-        catalogModel == nil ? builtIn : helper
+        guard let model = catalogModel else { return builtIn }
+        if models.neural(for: model)?.streamKind != nil { return neural }
+        if models.neural(for: model)?.batchKind != nil { return neuralBatch }
+        return helper
     }
 
-    /// Points the helper at the chosen model, language and custom words.
+    /// The catalog model in use and the engine it runs on, as one value.
+    private var modelKey: String? {
+        catalogModel.map { "\($0.id) \(models.neural(for: $0) == nil ? "gpu" : "neural-engine")" }
+    }
+
+    /// The engine for a streaming catalog model.
+    private var streamingEngine: any StreamingSpeechEngine {
+        catalogModel.flatMap(models.neural(for:))?.streamKind != nil ? neural : helper
+    }
+
+    /// Points the engine for the chosen catalog model at its files, language
+    /// and custom words.
     private func configureHelper() async {
         guard let model = catalogModel, let path = models.path(for: model) else { return }
+        let language = model.isMultilingual ? settings.modelLanguage.flatMap(model.languageTag) : nil
+        if let kind = models.neural(for: model)?.streamKind {
+            await neural.configure(kind: kind, directory: path, language: language)
+            return
+        }
+        if let kind = models.neural(for: model)?.batchKind {
+            await neuralBatch.configure(kind: kind, directory: path)
+            return
+        }
         await helper.configure(
             modelPath: path.path,
             language: model.isMultilingual ? settings.modelLanguage.flatMap(model.languageTag) : nil,
@@ -151,6 +178,7 @@ final class DictationController {
         hotkey.onSignal = { [weak self] signal, time in self?.handle(signal, at: time) }
         pill.position = settings.pillPosition
         pill.keySymbol = settings.dictationKey.symbol
+        models.engine = settings.modelEngine
         store.onChange = { [weak self] settings in self?.apply(settings) }
         retrySetup()
         Task { await Permission.promptMissing() }
@@ -161,14 +189,18 @@ final class DictationController {
     }
 
     private func apply(_ settings: SottoSettings) {
+        models.engine = settings.modelEngine
         Task { await configureHelper() }
-        if catalogModel?.id != activeModelID, machine.phase == .idle {
+        if modelKey != activeModelKey, machine.phase == .idle {
             // A different model: free the old one and prepare the new one.
-            activeModelID = catalogModel?.id
+            activeModelKey = modelKey
             modelReady = false
-            Task { [builtIn, helper] in
+            Task { [builtIn, helper, neural, neuralBatch] in
                 await builtIn.unload()
                 await helper.unload()
+                await neural.unload()
+                await neuralBatch.unload()
+            await neuralBatch.unload()
                 await self.prepareModel()
             }
         }
@@ -242,7 +274,7 @@ final class DictationController {
     private func prepareModel() async {
         guard builtIn.isDownloaded else { return }
         await configureHelper()
-        activeModelID = catalogModel?.id
+        activeModelKey = modelKey
         let engine = self.engine
         isPreparing = true
         onChange?()
@@ -373,7 +405,7 @@ final class DictationController {
 
         let live: any LiveTranscribing
         if catalogModel?.streams == true {
-            live = StreamingTranscriber(engine: helper, voice: voice, id: session, lookaheadMs: settings.liveTextDelayMs) { [weak self] text in
+            live = StreamingTranscriber(engine: streamingEngine, voice: voice, id: session, lookaheadMs: settings.liveTextDelayMs) { [weak self] text in
                 Task { @MainActor in self?.showLiveText(text, session: session) }
             }
         } else {
@@ -592,11 +624,13 @@ final class DictationController {
         unloadTask?.cancel()
         let minutes = settings.unloadAfterMinutes
         guard minutes > 0 else { return }
-        unloadTask = Task { [builtIn, helper, voice] in
+        unloadTask = Task { [builtIn, helper, neural, neuralBatch, voice] in
             try? await Task.sleep(for: .seconds(minutes * 60))
             guard !Task.isCancelled else { return }
             await builtIn.unload()
             await helper.unload()
+            await neural.unload()
+            await neuralBatch.unload()
             await voice.unload()
             self.modelReady = false
             self.onChange?()

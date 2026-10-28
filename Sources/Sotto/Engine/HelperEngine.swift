@@ -4,7 +4,7 @@ import SottoEngineProtocol
 /// A transcribe.cpp model, run by the SottoEngine XPC helper. If the helper
 /// crashes, macOS relaunches it on the next call and the model is loaded
 /// again; the app itself is unaffected.
-actor HelperEngine: SpeechEngine {
+actor HelperEngine: StreamingSpeechEngine {
     enum HelperError: LocalizedError {
         case failed(String)
         case lost
@@ -54,6 +54,8 @@ actor HelperEngine: SpeechEngine {
         if let error { throw HelperError.failed(error) }
         return text ?? ""
     }
+
+    nonisolated var fixedLookaheadMs: Int? { nil }
 
     /// Starts a live stream, for models built to stream. `id` tags it;
     /// `lookaheadMs` is how long the model may wait before writing words.

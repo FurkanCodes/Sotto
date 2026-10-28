@@ -103,7 +103,8 @@ enum ModelCatalog {
               let data = try? Data(contentsOf: url),
               let root = try? JSONDecoder().decode(Root.self, from: data)
         else { return [] }
-        return root.models.filter { $0.role == "asr" && $0.file != nil }.sorted { a, b in
+        // Parakeet v3 is the built-in model, already on the Neural Engine.
+        return root.models.filter { $0.role == "asr" && $0.file != nil && $0.id != "parakeet-tdt-0.6b-v3" }.sorted { a, b in
             let rankA = ranking.firstIndex(of: a.id) ?? Int.max
             let rankB = ranking.firstIndex(of: b.id) ?? Int.max
             if rankA != rankB { return rankA < rankB }

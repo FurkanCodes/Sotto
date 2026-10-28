@@ -13,6 +13,7 @@ struct SottoSettingsTests {
         settings.autoSendApps = [AutoSendRule(app: AppRef(bundleID: "com.tinyspeck.slackmacgap", name: "Slack"))]
         settings.skipApps = [AppRef(bundleID: "com.1password.1password", name: "1Password")]
         settings.mouseButton = 3
+        settings.modelEngine = .gpu
         #expect(SottoSettings.decode(try settings.encoded()) == settings)
     }
 
@@ -23,6 +24,13 @@ struct SottoSettingsTests {
         #expect(settings.removeFillerWords == true)
         #expect(settings.showPill == false)
         #expect(settings.unloadAfterMinutes == 0)
+    }
+
+    @Test func unknownEngineFallsBackToAutomatic() {
+        let json = #"{"modelEngine": "tpu", "playSounds": true}"#
+        let settings = SottoSettings.decode(Data(json.utf8))
+        #expect(settings.modelEngine == .automatic)
+        #expect(settings.playSounds == true)
     }
 
     @Test func unreadableFileGivesDefaults() {

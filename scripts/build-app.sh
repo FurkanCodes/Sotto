@@ -22,7 +22,7 @@ mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin_dir/Sotto" "$app/Contents/MacOS/Sotto"
 cp Resources/Info.plist "$app/Contents/Info.plist"
 cp THIRD_PARTY_NOTICES.md "$app/Contents/Resources/"
-cp Resources/model-catalog.json "$app/Contents/Resources/"
+cp Resources/model-catalog.json Resources/neural-engine-models.json "$app/Contents/Resources/"
 # The app icon, from Icon Composer's format: macOS 26 draws it with Liquid
 # Glass, and older-style icons get boxed in a gray frame. actool also writes
 # AppIcon.icns for older places that read it.

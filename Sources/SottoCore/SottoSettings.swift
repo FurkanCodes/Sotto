@@ -8,6 +8,17 @@ public enum PillPosition: String, Codable, CaseIterable, Sendable {
     case bottom, top
 }
 
+/// Where catalog models run when they come in both builds.
+public enum ModelEngine: String, Codable, CaseIterable, Sendable {
+    /// The Neural Engine build on Apple silicon, unless that build is known
+    /// to be worse; otherwise the GPU build.
+    case automatic
+    /// The Neural Engine build whenever there is one, to save battery.
+    case neuralEngine
+    /// Always the GPU build, for the quickest live text.
+    case gpu
+}
+
 /// An app picked by the user, remembered by bundle identifier.
 public struct AppRef: Codable, Equatable, Hashable, Sendable, Identifiable {
     public var bundleID: String
@@ -84,6 +95,8 @@ public struct SottoSettings: Codable, Equatable, Sendable {
     /// words, in ms. Shorter shows live text sooner and is slightly less
     /// accurate; 0 keeps the model's own default, its most accurate.
     public var liveTextDelayMs = 480
+    /// Where catalog models run; the built-in model always uses the Neural Engine.
+    public var modelEngine = ModelEngine.automatic
 
     public init() {}
 
@@ -120,6 +133,7 @@ public struct SottoSettings: Codable, Equatable, Sendable {
         modelID = value(.modelID, defaults.modelID)
         modelLanguage = value(.modelLanguage, defaults.modelLanguage)
         liveTextDelayMs = max(0, value(.liveTextDelayMs, defaults.liveTextDelayMs))
+        modelEngine = value(.modelEngine, defaults.modelEngine)
     }
 
     /// Decodes settings, falling back to defaults if the data isn't JSON at all.

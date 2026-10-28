@@ -146,3 +146,34 @@ With 2 threads:
 | Nemotron 3.5 | 80 ms (8 threads) | 0.4 s | 226 | | 62 ms | 6 (lost a clause) |
 
 On the 4.6 s clip, 320 ms and below dropped the final period ("Thanks"); 480 ms matched. The 160 ms and 80 ms settings aren't offered.
+
+## 2026-10-28: Neural Engine (FluidAudio CoreML) against GPU (transcribe.cpp)
+
+Same model, two builds. GPU: `--model <gguf>`; Neural Engine: `--model-id <id> --engine neuralEngine`, which downloads the pinned CoreML files through ModelStore (each result reports `"engine"`). Streaming models with `--live` (real time, 64 ms chunks); the others as whole clips with `--repeat`. CPU is process CPU time; GPU and Neural Engine power were not measured (that needs `sudo powermetrics`).
+
+**Parakeet Unified**, 45.8 s clip with no pauses, streamed:
+
+| Setting | After release, NE / GPU | First live text, NE / GPU | CPU, NE (app) / GPU (helper) | Text |
+|---|---|---|---|---|
+| 320 ms | 36 / 52 ms | 0.79 / 0.88 s | 4.0 / 7.4 s | same |
+| 1120 ms | 36 / 96 ms | 1.7 / 1.8 s | 1.8 / 3.0 s | same |
+| 2080 ms | 38 / 192 ms | 2.1 / 2.5 s | 1.5 / 2.3 s | same (NE kept the final period) |
+
+Each setting is a separate 580 MB encoder, so Sotto ships 320 ms. Through the app's own path (`--model-id`): 33–37 ms after release, first live text at 0.87–1.0 s.
+
+**Nemotron 3.5 Streaming**, 45.8 s clip, streamed: NE (560 ms chunks) 33–40 ms after release, first live text 1.14 s, CPU 4.9 s, 3 punctuation differences; GPU (560 ms setting) 41 ms, 0.74 s, 4.9 s. NE with 1120 ms chunks: 63 ms, 1.28 s, CPU 4.4 s. Turkish (`tr-TR`) was equally poor on both.
+
+**Nemotron Speech Streaming (English)**, streamed: NE dropped opening words ("Here is my plan" → "Is my plan" at 560 ms; "Hey, can you" → "Can you" at 1120 ms) and wrote "hockey" for "hotkey"; the GPU build at the same settings didn't. First live text, NE / GPU: 1.12 / 0.70 s at 560 ms, 1.24 / 1.30 s at 1120 ms.
+
+**Whole clips** (transcribe time, runs after the first; 4.6 s and 45.8 s clips):
+
+| Model | Short, NE / GPU | Long, NE / GPU | Text |
+|---|---|---|---|
+| Parakeet TDT 0.6B v2 | 46 / 48–49 ms | 124 / 371–443 ms | one comma apart |
+| Parakeet Ultra | 45 / 56–57 ms | 161–173 / 527–759 ms | two punctuation marks apart |
+| Parakeet TDT-CTC 110M | 17 / 24 ms | 57–65 / 186–219 ms | "fifty" against "50" |
+| Cohere Transcribe | 21,761–22,270 / 129–133 ms | 46,491–47,793 / 1,077–1,107 ms | same |
+
+Cohere's CoreML encoder (1.9 GB) evidently falls back to the CPU; it isn't offered. Parakeet v2's CoreML build prints "E5RT … zero shape error" while loading, with correct output.
+
+The first comparison of the four whole-clip models was discarded: the app bundle predated their manifest entries, so both runs used the GPU.
