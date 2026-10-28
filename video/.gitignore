@@ -1,0 +1,4 @@
+node_modules/
+out/
+# Rebuilt from public/sfx/raw by scripts/elevenlabs.py, without spending credits.
+public/sfx/*.wav

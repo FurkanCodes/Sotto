@@ -1,0 +1,1064 @@
+{
+ "voice": "bIHbv24MWmeRgasZH58o",
+ "model": "eleven_v3",
+ "clips": {
+  "open": {
+   "file": "narration/open.mp3",
+   "duration": 5.2,
+   "words": [
+    {
+     "text": "[softly]",
+     "start": 0.0,
+     "end": 0.28
+    },
+    {
+     "text": "Sotto",
+     "start": 0.33,
+     "end": 0.48
+    },
+    {
+     "text": "voce.",
+     "start": 0.587,
+     "end": 1.2
+    },
+    {
+     "text": "It's",
+     "start": 1.547,
+     "end": 2.32
+    },
+    {
+     "text": "Italian...",
+     "start": 2.39,
+     "end": 3.44
+    },
+    {
+     "text": "it",
+     "start": 3.493,
+     "end": 3.6
+    },
+    {
+     "text": "means",
+     "start": 3.653,
+     "end": 3.92
+    },
+    {
+     "text": "speaking",
+     "start": 3.982,
+     "end": 4.48
+    },
+    {
+     "text": "quietly.",
+     "start": 4.56,
+     "end": 5.2
+    }
+   ],
+   "hash": "cc5a13eba13a4898"
+  },
+  "hook": {
+   "file": "narration/hook.mp3",
+   "duration": 5.6,
+   "words": [
+    {
+     "text": "Honestly?",
+     "start": 0.0,
+     "end": 0.56
+    },
+    {
+     "text": "I",
+     "start": 0.88,
+     "end": 1.2
+    },
+    {
+     "text": "think",
+     "start": 1.24,
+     "end": 1.44
+    },
+    {
+     "text": "a",
+     "start": 1.48,
+     "end": 1.52
+    },
+    {
+     "text": "lot",
+     "start": 1.56,
+     "end": 1.68
+    },
+    {
+     "text": "faster",
+     "start": 1.737,
+     "end": 2.08
+    },
+    {
+     "text": "than",
+     "start": 2.112,
+     "end": 2.24
+    },
+    {
+     "text": "I",
+     "start": 2.28,
+     "end": 2.32
+    },
+    {
+     "text": "type.",
+     "start": 2.4,
+     "end": 2.88
+    },
+    {
+     "text": "You",
+     "start": 3.1,
+     "end": 3.76
+    },
+    {
+     "text": "probably",
+     "start": 3.796,
+     "end": 4.08
+    },
+    {
+     "text": "do",
+     "start": 4.133,
+     "end": 4.24
+    },
+    {
+     "text": "too.",
+     "start": 4.32,
+     "end": 5.6
+    }
+   ],
+   "hash": "ce2283e9e94624a4"
+  },
+  "dictate": {
+   "file": "narration/dictate.mp3",
+   "duration": 8.24,
+   "words": [
+    {
+     "text": "So...",
+     "start": 0.0,
+     "end": 0.48
+    },
+    {
+     "text": "you",
+     "start": 0.64,
+     "end": 1.12
+    },
+    {
+     "text": "hold",
+     "start": 1.168,
+     "end": 1.36
+    },
+    {
+     "text": "a",
+     "start": 1.4,
+     "end": 1.44
+    },
+    {
+     "text": "key,",
+     "start": 1.54,
+     "end": 2.32
+    },
+    {
+     "text": "say",
+     "start": 2.38,
+     "end": 2.56
+    },
+    {
+     "text": "what",
+     "start": 2.592,
+     "end": 2.72
+    },
+    {
+     "text": "you're",
+     "start": 2.74,
+     "end": 2.88
+    },
+    {
+     "text": "thinking,",
+     "start": 2.933,
+     "end": 3.76
+    },
+    {
+     "text": "and",
+     "start": 3.8,
+     "end": 3.92
+    },
+    {
+     "text": "let",
+     "start": 3.98,
+     "end": 4.16
+    },
+    {
+     "text": "go.",
+     "start": 4.293,
+     "end": 4.8
+    },
+    {
+     "text": "That's",
+     "start": 5.008,
+     "end": 5.92
+    },
+    {
+     "text": "it.",
+     "start": 6.0,
+     "end": 6.24
+    },
+    {
+     "text": "It's",
+     "start": 6.48,
+     "end": 7.04
+    },
+    {
+     "text": "already",
+     "start": 7.1,
+     "end": 7.52
+    },
+    {
+     "text": "there.",
+     "start": 7.587,
+     "end": 8.24
+    }
+   ],
+   "hash": "8b01e2c82ecaffbd"
+  },
+  "clean": {
+   "file": "narration/clean.mp3",
+   "duration": 7.36,
+   "words": [
+    {
+     "text": "It",
+     "start": 0.0,
+     "end": 0.08
+    },
+    {
+     "text": "cleans",
+     "start": 0.126,
+     "end": 0.4
+    },
+    {
+     "text": "up",
+     "start": 0.453,
+     "end": 0.56
+    },
+    {
+     "text": "after",
+     "start": 0.6,
+     "end": 0.8
+    },
+    {
+     "text": "you,",
+     "start": 0.84,
+     "end": 1.04
+    },
+    {
+     "text": "too.",
+     "start": 1.1,
+     "end": 1.36
+    },
+    {
+     "text": "The",
+     "start": 1.6,
+     "end": 2.32
+    },
+    {
+     "text": "ums...",
+     "start": 2.533,
+     "end": 3.76
+    },
+    {
+     "text": "the",
+     "start": 3.82,
+     "end": 4.0
+    },
+    {
+     "text": "\"two,",
+     "start": 4.24,
+     "end": 4.88
+    },
+    {
+     "text": "actually",
+     "start": 4.942,
+     "end": 5.44
+    },
+    {
+     "text": "three\"...",
+     "start": 5.507,
+     "end": 6.08
+    },
+    {
+     "text": "gone.",
+     "start": 6.288,
+     "end": 7.36
+    }
+   ],
+   "hash": "d805ffa986636c9e"
+  },
+  "style": {
+   "file": "narration/style.mp3",
+   "duration": 5.52,
+   "words": [
+    {
+     "text": "And",
+     "start": 0.0,
+     "end": 0.08
+    },
+    {
+     "text": "it",
+     "start": 0.107,
+     "end": 0.16
+    },
+    {
+     "text": "writes",
+     "start": 0.206,
+     "end": 0.48
+    },
+    {
+     "text": "the",
+     "start": 0.5,
+     "end": 0.56
+    },
+    {
+     "text": "way",
+     "start": 0.6,
+     "end": 0.72
+    },
+    {
+     "text": "each",
+     "start": 0.784,
+     "end": 1.04
+    },
+    {
+     "text": "app",
+     "start": 1.1,
+     "end": 1.28
+    },
+    {
+     "text": "expects.",
+     "start": 1.36,
+     "end": 2.24
+    },
+    {
+     "text": "Casual",
+     "start": 2.343,
+     "end": 2.96
+    },
+    {
+     "text": "in",
+     "start": 2.987,
+     "end": 3.04
+    },
+    {
+     "text": "your",
+     "start": 3.072,
+     "end": 3.2
+    },
+    {
+     "text": "chats,",
+     "start": 3.293,
+     "end": 4.16
+    },
+    {
+     "text": "proper",
+     "start": 4.217,
+     "end": 4.56
+    },
+    {
+     "text": "in",
+     "start": 4.587,
+     "end": 4.64
+    },
+    {
+     "text": "your",
+     "start": 4.672,
+     "end": 4.8
+    },
+    {
+     "text": "email.",
+     "start": 4.867,
+     "end": 5.52
+    }
+   ],
+   "hash": "c217d830044688f1"
+  },
+  "send": {
+   "file": "narration/send.mp3",
+   "duration": 3.68,
+   "words": [
+    {
+     "text": "Say",
+     "start": 0.0,
+     "end": 0.32
+    },
+    {
+     "text": "\"send",
+     "start": 0.48,
+     "end": 0.88
+    },
+    {
+     "text": "it\"",
+     "start": 0.933,
+     "end": 1.12
+    },
+    {
+     "text": "at",
+     "start": 1.147,
+     "end": 1.2
+    },
+    {
+     "text": "the",
+     "start": 1.24,
+     "end": 1.36
+    },
+    {
+     "text": "end,",
+     "start": 1.42,
+     "end": 2.0
+    },
+    {
+     "text": "and",
+     "start": 2.02,
+     "end": 2.08
+    },
+    {
+     "text": "it",
+     "start": 2.107,
+     "end": 2.16
+    },
+    {
+     "text": "hits",
+     "start": 2.224,
+     "end": 2.48
+    },
+    {
+     "text": "Return",
+     "start": 2.537,
+     "end": 2.88
+    },
+    {
+     "text": "for",
+     "start": 2.92,
+     "end": 3.04
+    },
+    {
+     "text": "you.",
+     "start": 3.12,
+     "end": 3.68
+    }
+   ],
+   "hash": "73224af900485737"
+  },
+  "words": {
+   "file": "narration/words.mp3",
+   "duration": 6.16,
+   "words": [
+    {
+     "text": "You",
+     "start": 0.0,
+     "end": 0.08
+    },
+    {
+     "text": "can",
+     "start": 0.12,
+     "end": 0.24
+    },
+    {
+     "text": "teach",
+     "start": 0.28,
+     "end": 0.48
+    },
+    {
+     "text": "it",
+     "start": 0.533,
+     "end": 0.64
+    },
+    {
+     "text": "your",
+     "start": 0.672,
+     "end": 0.8
+    },
+    {
+     "text": "words.",
+     "start": 0.88,
+     "end": 1.36
+    },
+    {
+     "text": "Names,",
+     "start": 1.547,
+     "end": 2.48
+    },
+    {
+     "text": "brands...",
+     "start": 2.606,
+     "end": 3.92
+    },
+    {
+     "text": "the",
+     "start": 3.96,
+     "end": 4.08
+    },
+    {
+     "text": "odd",
+     "start": 4.14,
+     "end": 4.32
+    },
+    {
+     "text": "stuff",
+     "start": 4.36,
+     "end": 4.56
+    },
+    {
+     "text": "it",
+     "start": 4.613,
+     "end": 4.72
+    },
+    {
+     "text": "couldn't",
+     "start": 4.743,
+     "end": 5.16
+    },
+    {
+     "text": "possibly",
+     "start": 5.191,
+     "end": 5.44
+    },
+    {
+     "text": "know.",
+     "start": 5.504,
+     "end": 6.16
+    }
+   ],
+   "hash": "0f596fabe9599462"
+  },
+  "keys": {
+   "file": "narration/keys.mp3",
+   "duration": 4.72,
+   "words": [
+    {
+     "text": "Pick",
+     "start": 0.0,
+     "end": 0.24
+    },
+    {
+     "text": "whichever",
+     "start": 0.28,
+     "end": 0.64
+    },
+    {
+     "text": "key",
+     "start": 0.7,
+     "end": 0.88
+    },
+    {
+     "text": "feels",
+     "start": 0.947,
+     "end": 1.28
+    },
+    {
+     "text": "right.",
+     "start": 1.333,
+     "end": 1.68
+    },
+    {
+     "text": "Or",
+     "start": 1.973,
+     "end": 2.56
+    },
+    {
+     "text": "a",
+     "start": 2.6,
+     "end": 2.64
+    },
+    {
+     "text": "mouse",
+     "start": 2.68,
+     "end": 2.88
+    },
+    {
+     "text": "button,",
+     "start": 2.937,
+     "end": 3.52
+    },
+    {
+     "text": "if",
+     "start": 3.573,
+     "end": 3.68
+    },
+    {
+     "text": "that's",
+     "start": 3.712,
+     "end": 3.92
+    },
+    {
+     "text": "more",
+     "start": 3.952,
+     "end": 4.08
+    },
+    {
+     "text": "you.",
+     "start": 4.16,
+     "end": 4.72
+    }
+   ],
+   "hash": "f8fac3c80fe157e5"
+  },
+  "models": {
+   "file": "narration/models.mp3",
+   "duration": 5.76,
+   "words": [
+    {
+     "text": "There",
+     "start": 0.0,
+     "end": 0.08
+    },
+    {
+     "text": "are",
+     "start": 0.1,
+     "end": 0.16
+    },
+    {
+     "text": "seventy-two",
+     "start": 0.21,
+     "end": 0.8
+    },
+    {
+     "text": "models",
+     "start": 0.857,
+     "end": 1.2
+    },
+    {
+     "text": "to",
+     "start": 1.227,
+     "end": 1.28
+    },
+    {
+     "text": "choose",
+     "start": 1.326,
+     "end": 1.6
+    },
+    {
+     "text": "from.",
+     "start": 1.664,
+     "end": 2.24
+    },
+    {
+     "text": "The",
+     "start": 2.34,
+     "end": 2.64
+    },
+    {
+     "text": "default",
+     "start": 2.7,
+     "end": 3.12
+    },
+    {
+     "text": "one",
+     "start": 3.2,
+     "end": 3.44
+    },
+    {
+     "text": "already",
+     "start": 3.49,
+     "end": 3.84
+    },
+    {
+     "text": "speaks",
+     "start": 3.897,
+     "end": 4.24
+    },
+    {
+     "text": "twenty-five",
+     "start": 4.274,
+     "end": 4.72
+    },
+    {
+     "text": "languages.",
+     "start": 4.792,
+     "end": 5.76
+    }
+   ],
+   "hash": "ffdd7361a6ed5a12"
+  },
+  "quiet": {
+   "file": "narration/quiet.mp3",
+   "duration": 5.2,
+   "words": [
+    {
+     "text": "When",
+     "start": 0.0,
+     "end": 0.08
+    },
+    {
+     "text": "you're",
+     "start": 0.1,
+     "end": 0.24
+    },
+    {
+     "text": "not",
+     "start": 0.28,
+     "end": 0.4
+    },
+    {
+     "text": "talking,",
+     "start": 0.46,
+     "end": 1.04
+    },
+    {
+     "text": "it's",
+     "start": 1.093,
+     "end": 1.28
+    },
+    {
+     "text": "not",
+     "start": 1.34,
+     "end": 1.52
+    },
+    {
+     "text": "doing",
+     "start": 1.56,
+     "end": 1.76
+    },
+    {
+     "text": "anything.",
+     "start": 1.822,
+     "end": 2.56
+    },
+    {
+     "text": "Like...",
+     "start": 2.672,
+     "end": 4.0
+    },
+    {
+     "text": "nothing",
+     "start": 4.05,
+     "end": 4.4
+    },
+    {
+     "text": "at",
+     "start": 4.427,
+     "end": 4.48
+    },
+    {
+     "text": "all.",
+     "start": 4.56,
+     "end": 5.2
+    }
+   ],
+   "hash": "640b162f9582648d"
+  },
+  "battery": {
+   "file": "narration/battery.mp3",
+   "duration": 6.32,
+   "words": [
+    {
+     "text": "And",
+     "start": 0.0,
+     "end": 0.08
+    },
+    {
+     "text": "when",
+     "start": 0.112,
+     "end": 0.24
+    },
+    {
+     "text": "you",
+     "start": 0.28,
+     "end": 0.4
+    },
+    {
+     "text": "are,",
+     "start": 0.48,
+     "end": 1.2
+    },
+    {
+     "text": "it",
+     "start": 1.227,
+     "end": 1.28
+    },
+    {
+     "text": "runs",
+     "start": 1.376,
+     "end": 1.76
+    },
+    {
+     "text": "on",
+     "start": 1.813,
+     "end": 1.92
+    },
+    {
+     "text": "the",
+     "start": 1.94,
+     "end": 2.0
+    },
+    {
+     "text": "Neural",
+     "start": 2.046,
+     "end": 2.32
+    },
+    {
+     "text": "Engine.",
+     "start": 2.377,
+     "end": 3.04
+    },
+    {
+     "text": "About",
+     "start": 3.16,
+     "end": 3.76
+    },
+    {
+     "text": "a",
+     "start": 3.8,
+     "end": 3.84
+    },
+    {
+     "text": "sixth",
+     "start": 3.907,
+     "end": 4.24
+    },
+    {
+     "text": "of",
+     "start": 4.267,
+     "end": 4.32
+    },
+    {
+     "text": "the",
+     "start": 4.34,
+     "end": 4.4
+    },
+    {
+     "text": "power",
+     "start": 4.467,
+     "end": 4.8
+    },
+    {
+     "text": "the",
+     "start": 4.82,
+     "end": 4.88
+    },
+    {
+     "text": "GPU",
+     "start": 5.0,
+     "end": 5.36
+    },
+    {
+     "text": "would",
+     "start": 5.4,
+     "end": 5.6
+    },
+    {
+     "text": "use.",
+     "start": 5.72,
+     "end": 6.32
+    }
+   ],
+   "hash": "370140725489cd65"
+  },
+  "private": {
+   "file": "narration/private.mp3",
+   "duration": 5.28,
+   "words": [
+    {
+     "text": "And",
+     "start": 0.0,
+     "end": 0.16
+    },
+    {
+     "text": "none",
+     "start": 0.192,
+     "end": 0.32
+    },
+    {
+     "text": "of",
+     "start": 0.347,
+     "end": 0.4
+    },
+    {
+     "text": "it",
+     "start": 0.48,
+     "end": 0.64
+    },
+    {
+     "text": "ever",
+     "start": 0.736,
+     "end": 1.12
+    },
+    {
+     "text": "leaves",
+     "start": 1.166,
+     "end": 1.44
+    },
+    {
+     "text": "your",
+     "start": 1.456,
+     "end": 1.52
+    },
+    {
+     "text": "Mac.",
+     "start": 1.64,
+     "end": 2.24
+    },
+    {
+     "text": "Not",
+     "start": 2.42,
+     "end": 2.96
+    },
+    {
+     "text": "your",
+     "start": 2.992,
+     "end": 3.12
+    },
+    {
+     "text": "voice,",
+     "start": 3.2,
+     "end": 3.68
+    },
+    {
+     "text": "not",
+     "start": 3.88,
+     "end": 4.48
+    },
+    {
+     "text": "your",
+     "start": 4.512,
+     "end": 4.64
+    },
+    {
+     "text": "words.",
+     "start": 4.733,
+     "end": 5.28
+    }
+   ],
+   "hash": "dbe4d24b23b298df"
+  },
+  "more": {
+   "file": "narration/more.mp3",
+   "duration": 3.2,
+   "words": [
+    {
+     "text": "There's",
+     "start": 0.0,
+     "end": 0.4
+    },
+    {
+     "text": "a",
+     "start": 0.46,
+     "end": 0.52
+    },
+    {
+     "text": "bit",
+     "start": 0.55,
+     "end": 0.64
+    },
+    {
+     "text": "more",
+     "start": 0.672,
+     "end": 0.8
+    },
+    {
+     "text": "in",
+     "start": 0.853,
+     "end": 0.96
+    },
+    {
+     "text": "there.",
+     "start": 1.013,
+     "end": 1.36
+    },
+    {
+     "text": "But",
+     "start": 1.52,
+     "end": 2.0
+    },
+    {
+     "text": "you",
+     "start": 2.04,
+     "end": 2.16
+    },
+    {
+     "text": "get",
+     "start": 2.2,
+     "end": 2.32
+    },
+    {
+     "text": "the",
+     "start": 2.34,
+     "end": 2.4
+    },
+    {
+     "text": "idea.",
+     "start": 2.496,
+     "end": 3.2
+    }
+   ],
+   "hash": "2a51b10bf45e19d7"
+  },
+  "end": {
+   "file": "narration/end.mp3",
+   "duration": 6.4,
+   "words": [
+    {
+     "text": "Sotto.",
+     "start": 0.0,
+     "end": 0.64
+    },
+    {
+     "text": "It's",
+     "start": 0.987,
+     "end": 1.76
+    },
+    {
+     "text": "free,",
+     "start": 1.824,
+     "end": 2.48
+    },
+    {
+     "text": "it's",
+     "start": 2.533,
+     "end": 2.76
+    },
+    {
+     "text": "open",
+     "start": 2.784,
+     "end": 2.88
+    },
+    {
+     "text": "source...",
+     "start": 2.96,
+     "end": 4.16
+    },
+    {
+     "text": "and",
+     "start": 4.18,
+     "end": 4.24
+    },
+    {
+     "text": "Windows",
+     "start": 4.3,
+     "end": 4.72
+    },
+    {
+     "text": "and",
+     "start": 4.76,
+     "end": 4.88
+    },
+    {
+     "text": "Linux",
+     "start": 4.933,
+     "end": 5.2
+    },
+    {
+     "text": "are",
+     "start": 5.24,
+     "end": 5.36
+    },
+    {
+     "text": "coming",
+     "start": 5.394,
+     "end": 5.6
+    },
+    {
+     "text": "soon.",
+     "start": 5.68,
+     "end": 6.4
+    }
+   ],
+   "hash": "5ad096d8d3ed4e13"
+  }
+ }
+}

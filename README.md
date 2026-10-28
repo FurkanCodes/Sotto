@@ -31,11 +31,40 @@ Hold a key, speak, let go. Your words appear wherever you type.
 
 - **Hold to talk:** right Option, right Command, Fn, or a mouse button. Tap for hands-free.
 - **Live text** in a small on-screen pill while you speak.
-- **73 models:** Parakeet v3 is built in (25 languages). It and five more, including Parakeet Unified and Nemotron 3.5, run on the Neural Engine; the rest, like Whisper Turbo, run on the GPU. [Which runs where](docs/MODELS.md).
+- **72 models:** Parakeet v3 is built in (25 languages). It and five more, including Parakeet Unified and Nemotron 3.5, run on the Neural Engine; the rest, like Whisper Turbo, run on the GPU. [Which runs where](docs/MODELS.md).
 - **Clean output:** filler words removed, "at 2, actually 3" fixed to "at 3", style matched to each app.
 - **Your words:** a dictionary that learns from your corrections, replacements and snippets.
 - **Hands off:** say "send it" to press Return. Per-app auto-send.
 - **And more:** history, file transcription, apps to skip, quieter music while you talk.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/assets/screenshots/settings-general.png" alt="General settings: dictation key, tap to keep listening, filler words, spoken corrections, send it, and the pill"></td>
+    <td width="50%"><img src="docs/assets/screenshots/settings-general-styles.png" alt="More general settings: lowering other audio, microphone, matching the style to each app, and always send"></td>
+  </tr>
+  <tr>
+    <td><b>General.</b> Your key, hands-free, cleanup, “send it” and the pill.</td>
+    <td><b>Styles and system.</b> Casual text in chat, plain text in terminals, quieter music while you talk.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/screenshots/settings-models.png" alt="Models settings: the model in use, unloading when idle, Neural Engine or GPU, and recommended models"></td>
+    <td><img src="docs/assets/screenshots/settings-shortcut.png" alt="Shortcut settings: Right Option, Right Command or Fn, a mouse button, apps to skip, and how the key works"></td>
+  </tr>
+  <tr>
+    <td><b>Models.</b> Pick from 72, on the Neural Engine or the GPU.</td>
+    <td><b>Shortcut.</b> Right Option, Right Command, Fn or a mouse button; apps to skip.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/assets/screenshots/settings-privacy.png" alt="Privacy settings: speech stays on this Mac, no network connections, history retention"></td>
+    <td><img src="docs/assets/screenshots/transcribe-file.png" alt="Transcribe a File window: drop an audio or video file"></td>
+  </tr>
+  <tr>
+    <td><b>Privacy.</b> No network, no analytics, history kept as long as you choose.</td>
+    <td><b>Transcribe a file.</b> Voice memos, MP3, WAV, M4A, MOV and MP4.</td>
+  </tr>
+</table>
 
 ## Battery: Neural Engine vs GPU
 

@@ -1,0 +1,24 @@
+{
+  "name": "sotto-promo-video",
+  "private": true,
+  "description": "Sotto's feature video, rendered with Remotion. Not part of the app.",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render Promo out/sotto-promo.mp4",
+    "still": "remotion still Promo out/still.png",
+    "sfx": "sh scripts/sfx.sh",
+    "master": "ffmpeg -v error -y -i out/sotto-promo.mp4 -c:v copy -af loudnorm=I=-16:TP=-1.5:LRA=11 -c:a aac -b:a 192k out/sotto-promo-final.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.534",
+    "@remotion/google-fonts": "4.0.534",
+    "@remotion/media-utils": "4.0.534",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "remotion": "4.0.534"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "typescript": "5.9.3"
+  }
+}
