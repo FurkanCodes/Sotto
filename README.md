@@ -27,6 +27,16 @@ Hold a key, speak, let go. Your words appear wherever you type.
 | 🔋 **Battery-friendly** | Models run on the Neural Engine, Apple's low-power chip for AI, whenever they can: about 6× less power than the GPU. [See below](#battery-neural-engine-vs-gpu). |
 | 🪶 **Light** | Zero CPU while idle. The mic is on only while you hold the key. |
 
+## Features
+
+- **Hold to talk:** right Option, right Command, Fn, or a mouse button. Tap for hands-free.
+- **Live text** in a small on-screen pill while you speak.
+- **73 models:** Parakeet v3 is built in (25 languages). It and five more, including Parakeet Unified and Nemotron 3.5, run on the Neural Engine; the rest, like Whisper Turbo, run on the GPU. [Which runs where](docs/MODELS.md).
+- **Clean output:** filler words removed, "at 2, actually 3" fixed to "at 3", style matched to each app.
+- **Your words:** a dictionary that learns from your corrections, replacements and snippets.
+- **Hands off:** say "send it" to press Return. Per-app auto-send.
+- **And more:** history, file transcription, apps to skip, quieter music while you talk.
+
 ## Battery: Neural Engine vs GPU
 
 The same model (Parakeet Unified) transcribing the same 46-second dictation, measured with Apple's `powermetrics` on an M5:
@@ -37,16 +47,6 @@ The same model (Parakeet Unified) transcribing the same 46-second dictation, mea
 | GPU | 2.69 W | identical | 46–53 ms |
 
 Same words, about **6× less power**. By default Sotto uses the Neural Engine for every model with a Neural Engine version that works as well as the GPU one; you can switch to the GPU in Settings. Full numbers: [measurements](docs/measurements.md#2026-10-28-power-neural-engine-against-gpu) · [which models run where](docs/MODELS.md).
-
-## Features
-
-- **Hold to talk:** right Option, right Command, Fn, or a mouse button. Tap for hands-free.
-- **Live text** in a small on-screen pill while you speak.
-- **73 models:** Parakeet v3 is built in (25 languages). It and five more, including Parakeet Unified and Nemotron 3.5, run on the Neural Engine; the rest, like Whisper Turbo, run on the GPU. [Which runs where](docs/MODELS.md).
-- **Clean output:** filler words removed, "at 2, actually 3" fixed to "at 3", style matched to each app.
-- **Your words:** a dictionary that learns from your corrections, replacements and snippets.
-- **Hands off:** say "send it" to press Return. Per-app auto-send.
-- **And more:** history, file transcription, apps to skip, quieter music while you talk.
 
 ## Install
 
