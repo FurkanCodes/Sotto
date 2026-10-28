@@ -26,7 +26,30 @@ final class HotkeyMonitor {
     }
 
     private var tap: CFMachPort?
-    private var isHeld = false
+    private(set) var isHeld = false {
+        didSet {
+            if !isHeld {
+                for waiter in releaseWaiters { waiter.resume() }
+                releaseWaiters = []
+            }
+        }
+    }
+    private var releaseWaiters: [CheckedContinuation<Void, Never>] = []
+
+    /// Returns once the dictation key is up, or after `limit`. Pasting
+    /// while it's still down would add its modifier to Cmd+V.
+    func waitForRelease(limit: Duration = .seconds(1)) async {
+        guard isHeld else { return }
+        await withCheckedContinuation { continuation in
+            releaseWaiters.append(continuation)
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: limit)
+                guard let self else { return }
+                for waiter in self.releaseWaiters { waiter.resume() }
+                self.releaseWaiters = []
+            }
+        }
+    }
 
     private var keyCode: Int64 {
         switch key {

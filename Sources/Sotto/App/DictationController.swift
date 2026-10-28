@@ -346,23 +346,29 @@ final class DictationController {
         let duration = recordedSeconds
         let appName = NSWorkspace.shared.frontmostApplication?.localizedName
         Task {
+            // In hands-free mode the stopping press is still down; wait for it.
+            await hotkey.waitForRelease()
             let insertStart = ProcessInfo.processInfo.systemUptime
             // A trailing space keeps back-to-back dictations from running together.
             let outcome = await inserter.insert(text + " ")
             endSignpost()
             var pasteMs: Int?
+            let target = appName ?? "unknown app"
             switch outcome {
-            case .inserted(let chordAt, let readAt):
+            case .inserted(let method, let chordAt, let landedAt):
                 let toPaste = Int(((chordAt - releasedAt) * 1000).rounded())
-                let toRead = Int(((readAt - releasedAt) * 1000).rounded())
+                let toLanded = Int(((landedAt - releasedAt) * 1000).rounded())
                 let pasteStep = Int(((chordAt - insertStart) * 1000).rounded())
-                breakdown += " · paste \(pasteStep) ms"
+                breakdown += " · paste \(pasteStep) ms" + (method == .paste ? "" : " · inserted by \(method.rawValue)")
                 pasteMs = toPaste
-                Log.app.info("release→paste \(toPaste) ms, release→read \(toRead) ms · \(self.breakdown, privacy: .public)")
+                // Notice level, so macOS keeps it long enough to diagnose problems.
+                Log.app.notice("insert \(method.rawValue, privacy: .public) into \(target, privacy: .public): release→paste \(toPaste) ms, release→landed \(toLanded) ms · \(self.breakdown, privacy: .public)")
                 pill.hide()
-            case .notRead:
-                pill.flash("Couldn't paste. Copy it from the menu.", isError: true)
+            case .leftOnClipboard:
+                Log.app.notice("insert failed in \(target, privacy: .public): no text field took it; left on clipboard")
+                pill.flash("Copied. Press ⌘V to paste.", isError: true)
             case .failed:
+                Log.app.error("insert failed in \(target, privacy: .public): couldn't post keystrokes")
                 pill.flash("Couldn't paste. Check Accessibility.", isError: true)
             }
             last = LastDictation(
