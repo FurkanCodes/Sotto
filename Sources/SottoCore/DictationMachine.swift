@@ -39,10 +39,13 @@ public struct DictationMachine: Sendable {
 
     public private(set) var phase: Phase = .idle
     public let tapThreshold: TimeInterval
+    /// When false, a short tap is treated like any other release.
+    public var latchOnTap: Bool
     private var lastSession = 0
 
-    public init(tapThreshold: TimeInterval = 0.3) {
+    public init(tapThreshold: TimeInterval = 0.3, latchOnTap: Bool = true) {
         self.tapThreshold = tapThreshold
+        self.latchOnTap = latchOnTap
     }
 
     public var currentSession: Int? {
@@ -60,7 +63,7 @@ public struct DictationMachine: Sendable {
             return [.startCapture(session: lastSession)]
 
         case (.recording(let session, let pressedAt, false), .hotkeyUp(let time)):
-            if time - pressedAt < tapThreshold {
+            if latchOnTap, time - pressedAt < tapThreshold {
                 phase = .recording(session: session, pressedAt: pressedAt, latched: true)
                 return []
             }

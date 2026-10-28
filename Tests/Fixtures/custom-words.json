@@ -1,0 +1,21 @@
+{
+  "description": "Shared custom-word correction cases, ported from Handy's text.rs tests. Every Sotto implementation must pass these.",
+  "cases": [
+    { "input": "hello world", "words": ["Hello", "World"], "threshold": 0.5, "expected": "Hello World" },
+    { "input": "helo wrold", "words": ["hello", "world"], "threshold": 0.5, "expected": "hello world" },
+    { "input": "hello world", "words": [], "threshold": 0.5, "expected": "hello world" },
+    { "input": "il cui nome è Charge B, che permette", "words": ["ChargeBee"], "threshold": 0.5, "expected": "il cui nome è ChargeBee, che permette" },
+    { "input": "use Chat G P T for this", "words": ["ChatGPT"], "threshold": 0.5, "expected": "use ChatGPT for this" },
+    { "input": "Open AI GPT model", "words": ["OpenAI", "GPT"], "threshold": 0.5, "expected": "OpenAI GPT model" },
+    { "input": "CHARGE B is great", "words": ["ChargeBee"], "threshold": 0.5, "expected": "CHARGEBEE is great" },
+    { "input": "using Mac Book Pro", "words": ["MacBook Pro"], "threshold": 0.5, "expected": "using MacBook Pro" },
+    { "input": "use GPT4 for this", "words": ["GPT-4"], "threshold": 0.5, "expected": "use GPT-4 for this" },
+    { "input": "send it to RD for review", "words": ["R&D"], "threshold": 0.18, "expected": "send it to R&D for review" },
+    { "input": "send it to R and D for review", "words": ["R&D"], "threshold": 0.18, "expected": "send it to R&D for review" },
+    { "input": "send it to R&D for review", "words": ["R&D"], "threshold": 0.18, "expected": "send it to R&D for review" },
+    { "input": "「Handee。」", "words": ["Handy"], "threshold": 0.5, "expected": "「Handy。」" },
+    { "input": "你好。", "words": ["你号"], "threshold": 1.0, "expected": "你好。" },
+    { "input": "Let's ask Furcan about it.", "words": ["Furkan"], "threshold": 0.18, "expected": "Let's ask Furkan about it." },
+    { "input": "The weather is nice today.", "words": ["Furkan", "Sotto"], "threshold": 0.18, "expected": "The weather is nice today." }
+  ]
+}

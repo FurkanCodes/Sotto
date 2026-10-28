@@ -21,6 +21,12 @@ struct DictationMachineTests {
         #expect(machine.phase == .transcribing(session: 1))
     }
 
+    @Test func shortTapStopsWhenLatchingIsOff() {
+        var machine = DictationMachine(latchOnTap: false)
+        _ = machine.handle(.hotkeyDown(at: 0))
+        #expect(machine.handle(.hotkeyUp(at: 0.1)) == [.stopCaptureAndTranscribe(session: 1)])
+    }
+
     @Test func chordWhileHoldingDiscards() {
         var machine = DictationMachine()
         _ = machine.handle(.hotkeyDown(at: 0))

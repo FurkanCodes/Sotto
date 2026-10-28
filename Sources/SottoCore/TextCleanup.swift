@@ -14,8 +14,16 @@ public enum TextCleanup {
     /// are applied only when the caller says the text is English.
     public static let englishFillers = ["um", "ah", "eh"]
 
-    public static func clean(_ text: String, removeFillers: Bool = true, english: Bool = true) -> String {
+    public static func clean(
+        _ text: String,
+        removeFillers: Bool = true,
+        english: Bool = true,
+        customWords: [String] = []
+    ) -> String {
         var steps: [(String) -> String] = []
+        if !customWords.isEmpty {
+            steps.append { CustomWords.apply($0, words: customWords) }
+        }
         if removeFillers {
             let pattern = english ? englishPattern : universalPattern
             steps.append { removeFillerWords($0, pattern: pattern) }
