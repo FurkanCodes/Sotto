@@ -1,6 +1,6 @@
 # Sotto feature list
 
-The features we're coming back to. Tick each one off when it ships. Details for each one (where the idea comes from, effort, and whether it needs the network) are in `ROADMAP.md`. The suggested order is A, then C, then B, then D.
+The features we're coming back to. Tick each one off when it ships. Details for each one (where the idea comes from, effort, and whether it needs the network) are in `ROADMAP.md`. Current order: the in-house parts of B next (13, 12, 17), then D. C becomes a separate plugin system, designed later.
 
 ## A. Daily-use basics (all offline)
 
@@ -16,16 +16,20 @@ The features we're coming back to. Tick each one off when it ships. Details for 
 - [x] 10. **Live text in the pill** as each piece finishes.
 - [x] 11. **Usage stats** (words dictated, time saved), stored only on your Mac.
 
-## B. Smart formatting, on your Mac (Apple's on-device AI)
+## B. Smart formatting
 
-- [ ] 12. **Self-correction:** "at 2, actually 3" → "at 3".
-- [ ] 13. **A style per app:** casual in chat, formal in email, plain in code editors.
-- [ ] 14. **Custom modes:** "Polish", "Make it shorter", "Write as a prompt", "Translate to English", each with its own key or spoken trigger.
-- [ ] 15. **Voice editing:** select text and say "make this more formal".
-- [ ] 16. **Context awareness:** knows the app and the text around your cursor, for better names and formatting.
-- [ ] 17. **The dictionary learns** from your corrections.
+Built in-house, with rules instead of an AI model: 13, 12 and 17, in that order. 14 and 15 need an AI model and are on hold, because Sotto shouldn't depend on something outside it.
 
-## C. Integrations (destinations and plugins)
+- [ ] 12. **Self-correction (rule-based):** clear corrections like "at 2, actually 3" → "at 3" and "Ali, no wait, Mehmet" → "Mehmet"; vaguer ones stay as spoken.
+- [ ] 13. **A style per app (rule-based):** capitalization and punctuation rules per app type (casual in chat, proper sentences in email, no auto-punctuation in code editors and terminals), editable per app.
+- [ ] 14. *(On hold: needs an AI model.)* **Custom modes:** "Polish", "Make it shorter", "Write as a prompt", "Translate to English", each with its own key or spoken trigger.
+- [ ] 15. *(On hold: needs an AI model.)* **Voice editing:** select text and say "make this more formal".
+- [ ] 16. **Context awareness:** knowing the app drives 13. Rewriting from the surrounding text is on hold, because it needs an AI model.
+- [ ] 17. **The dictionary learns:** after a paste, Sotto watches the field briefly; if you fix a word, it offers to add it.
+
+## C. Plugins (separate system, designed later)
+
+Plugins get their own design. Buffer will be one plugin. The items below are ideas to fold into that design.
 
 - [ ] 18. **Send to an Apple Shortcut:** the "send to Buffer" path, with no network code in Sotto.
 - [ ] 19. **Send to a local script.**
