@@ -36,7 +36,7 @@ The two builds of a model are separate downloads. Switching engines downloads th
 | Canary 1B v2 | GPU | FluidAudio's build only transcribes English; the GPU build handles 25 languages. |
 | Every other model (Whisper, Moonshine, Granite, Voxtral, Qwen and more) | GPU | No Neural Engine build exists. |
 
-Measurements behind this table are in [measurements.md](measurements.md). Power draw hasn't been measured directly (that needs `sudo powermetrics`); the battery benefit rests on the Neural Engine's lower power for this kind of work and on the CPU time measured.
+Measurements behind this table are in [measurements.md](measurements.md). Measured with `powermetrics`, Parakeet Unified drew 0.46 W while streaming on the Neural Engine against 2.69 W on the GPU: about 6× less power for the same text.
 
 ## Downloads are pinned and checked
 

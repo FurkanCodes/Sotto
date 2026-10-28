@@ -149,7 +149,7 @@ On the 4.6 s clip, 320 ms and below dropped the final period ("Thanks"); 480 ms 
 
 ## 2026-10-28: Neural Engine (FluidAudio CoreML) against GPU (transcribe.cpp)
 
-Same model, two builds. GPU: `--model <gguf>`; Neural Engine: `--model-id <id> --engine neuralEngine`, which downloads the pinned CoreML files through ModelStore (each result reports `"engine"`). Streaming models with `--live` (real time, 64 ms chunks); the others as whole clips with `--repeat`. CPU is process CPU time; GPU and Neural Engine power were not measured (that needs `sudo powermetrics`).
+Same model, two builds. GPU: `--model <gguf>`; Neural Engine: `--model-id <id> --engine neuralEngine`, which downloads the pinned CoreML files through ModelStore (each result reports `"engine"`). Streaming models with `--live` (real time, 64 ms chunks); the others as whole clips with `--repeat`. CPU is process CPU time; power is in the next section.
 
 **Parakeet Unified**, 45.8 s clip with no pauses, streamed:
 
@@ -177,3 +177,17 @@ Each setting is a separate 580 MB encoder, so Sotto ships 320 ms. Through the ap
 Cohere's CoreML encoder (1.9 GB) evidently falls back to the CPU; it isn't offered. Parakeet v2's CoreML build prints "E5RT … zero shape error" while loading, with correct output.
 
 The first comparison of the four whole-clip models was discarded: the app bundle predated their manifest entries, so both runs used the GPU.
+
+## 2026-10-28: Power, Neural Engine against GPU
+
+`sudo powermetrics --samplers cpu_power,gpu_power,ane_power -i 1000 -n 300`, while a script streamed the 45.8 s no-pause clip through Parakeet Unified twice per engine (`--live --repeat 2`; the GPU build at its 320 ms setting, to match the Neural Engine's). Both builds were loaded and compiled beforehand. Averages of the one-second samples in each phase, whole-system power as powermetrics reports it:
+
+| Phase | Samples | CPU | GPU | Neural Engine | Total |
+|---|---|---|---|---|---|
+| Neural Engine build | 90 | 232 mW | 5 mW | 225 mW | **461 mW** |
+| GPU build | 91 | 372 mW | 2,321 mW | 0 mW | **2,692 mW** |
+| Idle, 30 s before | 30 | 531 mW | 38 mW | 0 mW | 570 mW |
+
+The GPU build drew about 5.8× the power, about 2.2 W more while dictating. Same text from both; after release 14–37 ms (Neural Engine) against 46–53 ms (GPU); first live text 0.86 s against 0.88 s.
+
+The idle phase read higher than the Neural Engine phase, so something else was busy in those 30 s; the two engines are compared directly rather than against idle.
