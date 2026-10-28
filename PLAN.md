@@ -111,7 +111,7 @@ Plan:
 ## Phase 5: Release prep ☐
 
 - Check the name (domains, App Store, trademarks) and pick the permanent bundle ID.
-- Developer ID signing and notarization.
+- Developer ID signing and notarization (deferred: first releases are unnotarized, see the decision log).
 - Manual update process.
 
 ## Later
@@ -128,3 +128,4 @@ Plan:
 | 2026-10-28 | Default model: Parakeet TDT 0.6B v3 on CoreML (FluidAudio), preferring the Neural Engine. |
 | 2026-10-28 | Silero voice detection; right Option hotkey; only the last transcript is kept, in memory; manual updates. |
 | 2026-10-28 | Engines: CoreML runs inside the app; transcribe-cpp runs in an XPC helper (Option A). Revisit after the Phase 2 memory test. |
+| 2026-10-28 | First releases ship without notarization: signed with the self-signed "Sotto Local Signing" certificate, so permissions survive updates, and opened once by hand (`docs/INSTALL.md`). `scripts/release.sh` packs the zip and its SHA-256. Developer ID and notarization stay in Phase 5 for later. |
