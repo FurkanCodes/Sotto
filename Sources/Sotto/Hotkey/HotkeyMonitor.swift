@@ -1,0 +1,85 @@
+import AppKit
+import Carbon.HIToolbox
+
+/// Watches the dictation key with a listen-only event tap on the main run
+/// loop. It wakes only when a key event arrives; nothing polls.
+///
+/// The key is right Option on its own. Modifier changes still reach event taps
+/// while Secure Input is on (password fields), so a modifier-only key keeps
+/// working there, unlike key combos (Handy #1578).
+@MainActor
+final class HotkeyMonitor {
+    enum Signal: Sendable {
+        case down, up
+        /// Another key was pressed while the dictation key was held.
+        case chord
+        case escape
+    }
+
+    var onSignal: ((Signal, TimeInterval) -> Void)?
+    var isRunning: Bool { tap != nil }
+
+    private var tap: CFMachPort?
+    private var isHeld = false
+    private let keyCode = Int64(kVK_RightOption)
+    /// NX_DEVICERALTKEYMASK: set while the right Option key is down.
+    private static let rightOptionBit: UInt64 = 0x40
+
+    /// Fails until Input Monitoring is granted.
+    func start() -> Bool {
+        guard tap == nil else { return true }
+        let mask = CGEventMask(1 << CGEventType.flagsChanged.rawValue) | CGEventMask(1 << CGEventType.keyDown.rawValue)
+        guard let tap = CGEvent.tapCreate(
+            tap: .cgSessionEventTap,
+            place: .headInsertEventTap,
+            options: .listenOnly,
+            eventsOfInterest: mask,
+            callback: hotkeyTapCallback,
+            userInfo: Unmanaged.passUnretained(self).toOpaque()
+        ) else { return false }
+        let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+        CGEvent.tapEnable(tap: tap, enable: true)
+        self.tap = tap
+        return true
+    }
+
+    fileprivate func handle(type: CGEventType, keyCode: Int64, flags: UInt64) {
+        let now = ProcessInfo.processInfo.systemUptime
+        switch type {
+        case .tapDisabledByTimeout, .tapDisabledByUserInput:
+            if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
+        case .flagsChanged:
+            guard keyCode == self.keyCode else { return }
+            let down = flags & Self.rightOptionBit != 0
+            guard down != isHeld else { return }
+            isHeld = down
+            onSignal?(down ? .down : .up, now)
+        case .keyDown:
+            if keyCode == Int64(kVK_Escape) {
+                onSignal?(.escape, now)
+            } else if isHeld {
+                onSignal?(.chord, now)
+            }
+        default:
+            break
+        }
+    }
+}
+
+private func hotkeyTapCallback(
+    proxy: CGEventTapProxy,
+    type: CGEventType,
+    event: CGEvent,
+    userInfo: UnsafeMutableRawPointer?
+) -> Unmanaged<CGEvent>? {
+    guard let userInfo else { return Unmanaged.passUnretained(event) }
+    let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+    let flags = event.flags.rawValue
+    let monitor = Unmanaged<HotkeyMonitor>.fromOpaque(userInfo).takeUnretainedValue()
+    // The tap's run loop source is on the main run loop.
+    MainActor.assumeIsolated {
+        monitor.handle(type: type, keyCode: keyCode, flags: flags)
+    }
+    return Unmanaged.passUnretained(event)
+}

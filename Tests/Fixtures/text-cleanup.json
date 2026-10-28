@@ -1,0 +1,22 @@
+{
+  "description": "Shared text-cleanup cases. Every Sotto implementation (macOS, Windows, Linux) must pass these.",
+  "cases": [
+    { "input": "Um, so I think we should go.", "expected": "So I think we should go." },
+    { "input": "I'm um not sure.", "expected": "I'm not sure." },
+    { "input": "So, uh, what do you think?", "expected": "So, what do you think?" },
+    { "input": "Hmm. Okay, let's do it.", "expected": "Okay, let's do it." },
+    { "input": "The umbrella is uh here.", "expected": "The umbrella is here." },
+    { "input": "Ah, right.", "expected": "Right." },
+    { "input": "Humming, ahead, uhura and hummus.", "expected": "Humming, ahead, uhura and hummus." },
+    { "input": "Um, hello.", "expected": "Um, hello.", "removeFillers": false },
+    { "input": "Um, hello.", "expected": "Um, hello.", "english": false },
+    { "input": "Uh, hola.", "expected": "Hola.", "english": false },
+    { "input": "I I I I think so", "expected": "I think so" },
+    { "input": "wh wh wh wh what", "expected": "wh what" },
+    { "input": "that that is fine", "expected": "that that is fine" },
+    { "input": "The the THE plan", "expected": "The plan" },
+    { "input": "  Hello   there \n world  ", "expected": "Hello there world" },
+    { "input": "Um.", "expected": "Um." },
+    { "input": "", "expected": "" }
+  ]
+}
