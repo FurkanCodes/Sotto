@@ -362,6 +362,17 @@ private struct ModelsPane: View {
                         }
                     }
                 }
+                if let current, current.streams {
+                    Picker(selection: $store.settings.liveTextDelayMs) {
+                        Text("Quickest, about 0.3 s").tag(320)
+                        Text("Quick, about 0.5 s").tag(480)
+                        Text("About 1 s").tag(1120)
+                        Text("Most accurate, slowest").tag(0)
+                    } label: {
+                        Text("Live text")
+                        Text("How soon words appear while you talk. Quicker settings can miss a comma now and then.")
+                    }
+                }
                 Picker(selection: $store.settings.unloadAfterMinutes) {
                     Text("After 1 minute").tag(1)
                     Text("After 5 minutes").tag(5)

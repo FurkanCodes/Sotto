@@ -124,3 +124,25 @@ Whisper Small got the Turkish sentence exactly right, with and without `--langua
 **Turkish:** Nemotron needs "tr-TR"; Sotto now maps the setting's "tr" to the model's own tag. The Yelda clip came out as "Medaba yarın sağa tüçte toplantımız var rütfen sunumu Mehmete gönder ve bınaha ber ver.", against Whisper Small's exact transcript.
 
 **Only the Parakeet family streams.** Moonshine's streaming decodes the whole recording again on every feed, and Voxtral Realtime hasn't been measured; both still use pieces.
+
+## 2026-10-28: Live text speed and helper threads
+
+`Sotto --transcribe-file long.wav --model <gguf> --live --lookahead <ms>` (45.8 s, no pauses), real time, one run each. "Lookahead" is how much audio the model waits for before it writes words; the helper picks the closest trained setting. Helper CPU is the SottoEngine process's CPU time (`ps -Ao time=,ucomm=`) at the end of the run. "Diffs" counts word-level differences from the slowest setting's final text.
+
+**Threads.** At 480 ms on Parakeet Unified, transcribe.cpp's default thread count (up to 8) cost 23.5 s of CPU; 4 threads 8.2 s, 2 threads 7.7 s, 1 thread 6.8 s, with identical text and caption timing. Release-to-text was 114–157 ms for all four. The helper now uses 2 threads on the GPU (the library default on the CPU backend). Whole-recording speed is unchanged: Parakeet Unified long 419 ms, short 54 ms; Whisper Small Turkish 207 ms.
+
+With 2 threads:
+
+| Model | Lookahead | First caption | Caption updates | Helper CPU | Release to text | Diffs |
+|---|---|---|---|---|---|---|
+| Parakeet Unified | 2080 ms (model default) | 2.5 s | 43 | 2.3 s | 192 ms | — |
+| Parakeet Unified | 1120 ms | 1.8 s | 79 | 3.0 s | 96 ms | 0 |
+| Parakeet Unified | **480 ms (Sotto's default)** | 1.0 s | 172 | 7.3 s | 147 ms | 0 |
+| Parakeet Unified | 320 ms | 0.9 s | 174 | 7.4 s | 52 ms | 0 |
+| Parakeet Unified | 160 ms (8 threads) | 0.75 s | 219 | | 79 ms | 9 (wrong words) |
+| Nemotron 3.5 | 1120 ms (model default) | 1.5 s | 40 | 3.6 s | 45 ms | — |
+| Nemotron 3.5 | 560 ms | 0.7 s | 78 | 4.9 s | 41 ms | 2 (punctuation) |
+| Nemotron 3.5 | 320 ms | 0.6 s | 130 | 5.3 s | 36 ms | 3 (punctuation) |
+| Nemotron 3.5 | 80 ms (8 threads) | 0.4 s | 226 | | 62 ms | 6 (lost a clause) |
+
+On the 4.6 s clip, 320 ms and below dropped the final period ("Thanks"); 480 ms matched. The 160 ms and 80 ms settings aren't offered.

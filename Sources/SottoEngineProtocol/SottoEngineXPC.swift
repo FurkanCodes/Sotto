@@ -15,8 +15,11 @@ import Foundation
     /// Starts a live stream on the loaded model, for models built to stream
     /// (Nemotron, Parakeet Unified). `id` tags the stream; calls for any
     /// other id are ignored, so late feeds from an earlier stream do no
-    /// harm. Replies with an error message, or nil on success.
-    func streamBegin(id: Int, language: String?, vocabulary: String, reply: @escaping @Sendable (String?) -> Void)
+    /// harm. `lookaheadMs` is how much audio the model may wait for before
+    /// it writes words: shorter shows text sooner and is slightly less
+    /// accurate; 0 keeps the model's default. Replies with an error
+    /// message, or nil on success.
+    func streamBegin(id: Int, language: String?, vocabulary: String, lookaheadMs: Int, reply: @escaping @Sendable (String?) -> Void)
 
     /// Feeds more 16 kHz mono Float32 audio. Replies with the text so far,
     /// or an error. Both are nil for a stale id.

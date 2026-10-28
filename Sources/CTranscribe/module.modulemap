@@ -1,6 +1,7 @@
 // transcribe.cpp's C API, built by scripts/build-transcribe.sh.
 module CTranscribe [system] {
     header "../../Vendor/transcribe/include/transcribe.h"
+    header "../../Vendor/transcribe/include/transcribe/parakeet.h"
     link "transcribe"
     link "ggml"
     link "ggml-cpu"

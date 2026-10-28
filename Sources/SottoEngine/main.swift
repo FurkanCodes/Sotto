@@ -28,8 +28,8 @@ final class Engine: NSObject, SottoEngineXPC, @unchecked Sendable {
         }
     }
 
-    func streamBegin(id: Int, language: String?, vocabulary: String, reply: @escaping @Sendable (String?) -> Void) {
-        queue.async { reply(self.beginStream(id, language: language, vocabulary: vocabulary)) }
+    func streamBegin(id: Int, language: String?, vocabulary: String, lookaheadMs: Int, reply: @escaping @Sendable (String?) -> Void) {
+        queue.async { reply(self.beginStream(id, language: language, vocabulary: vocabulary, lookaheadMs: lookaheadMs)) }
     }
 
     func streamFeed(id: Int, samples: Data, reply: @escaping @Sendable (String?, String?) -> Void) {
@@ -99,7 +99,14 @@ final class Engine: NSObject, SottoEngineXPC, @unchecked Sendable {
         let status = transcribe_model_load_file(path, &params, &loaded)
         guard status == TRANSCRIBE_OK, let loaded else { return message(status, "Couldn't load the model") }
         var opened: OpaquePointer?
-        let sessionStatus = transcribe_session_init(loaded, nil, &opened)
+        var sessionParams = transcribe_session_params()
+        transcribe_session_params_init(&sessionParams)
+        // On the GPU, the CPU only runs small ops like Parakeet's decoder.
+        // The library's default of up to 8 threads spin between them: 23 s of
+        // CPU for 46 s of streaming, against 7.7 s with 2 threads and the same
+        // speed and text (docs/measurements.md). On the CPU, keep the default.
+        sessionParams.n_threads = backend == TRANSCRIBE_BACKEND_CPU ? 0 : 2
+        let sessionStatus = transcribe_session_init(loaded, &sessionParams, &opened)
         guard sessionStatus == TRANSCRIBE_OK, let opened else {
             transcribe_model_free(loaded)
             return message(sessionStatus, "This model can't transcribe")
@@ -110,7 +117,7 @@ final class Engine: NSObject, SottoEngineXPC, @unchecked Sendable {
         return nil
     }
 
-    private func beginStream(_ id: Int, language: String?, vocabulary: String) -> String? {
+    private func beginStream(_ id: Int, language: String?, vocabulary: String, lookaheadMs: Int) -> String? {
         guard let session, let model else { return "No model is loaded" }
         // A stream left over from a dictation that never finished.
         transcribe_stream_reset(session)
@@ -119,9 +126,9 @@ final class Engine: NSObject, SottoEngineXPC, @unchecked Sendable {
         defer { cWords.forEach { free($0) } }
         func begin(_ language: String?) -> transcribe_status {
             Self.withRunParams(language: language, vocabulary: cWords) { params in
-                var stream = transcribe_stream_params()
-                transcribe_stream_params_init(&stream)
-                return transcribe_stream_begin(session, params, &stream)
+                Self.withStreamParams(model, lookaheadMs: lookaheadMs) { stream in
+                    transcribe_stream_begin(session, params, stream)
+                }
             }
         }
         var status = begin(language)
@@ -185,6 +192,49 @@ final class Engine: NSObject, SottoEngineXPC, @unchecked Sendable {
                 return body(&params)
             }
         }
+    }
+
+    /// Stream parameters with the trained latency setting that comes
+    /// closest to `lookaheadMs` without going over (the smallest if none
+    /// fits), from docs/models/parakeet-unified-en-0.6b.md and
+    /// nemotron-3.5-asr-streaming-0.6b.md in transcribe.cpp. Other models,
+    /// and 0, keep their defaults.
+    private static func withStreamParams(
+        _ model: OpaquePointer, lookaheadMs: Int,
+        _ body: (UnsafePointer<transcribe_stream_params>) -> transcribe_status
+    ) -> transcribe_status {
+        var stream = transcribe_stream_params()
+        transcribe_stream_params_init(&stream)
+        // The extension starts with its transcribe_ext header, so a pointer
+        // to the whole struct is a pointer to that header.
+        func withFamily<Ext>(_ ext: inout Ext) -> transcribe_status {
+            withUnsafeMutablePointer(to: &ext) { pointer in
+                stream.family = UnsafeRawPointer(pointer).assumingMemoryBound(to: transcribe_ext.self)
+                return body(&stream)
+            }
+        }
+        func closest<T>(_ menu: [(ms: Int, value: T)]) -> T {
+            (menu.last { $0.ms <= lookaheadMs } ?? menu[0]).value
+        }
+        if lookaheadMs > 0, transcribe_model_accepts_ext_kind(model, TRANSCRIBE_EXT_SLOT_STREAM, TRANSCRIBE_EXT_KIND_PARAKEET_BUFFERED_STREAM) {
+            // Parakeet Unified: (chunk, right) in ms; the wait is chunk + right.
+            let (chunk, right) = closest([
+                (160, (80, 80)), (320, (160, 160)), (480, (160, 320)), (1120, (560, 560)), (2080, (1040, 1040)),
+            ])
+            var ext = transcribe_parakeet_buffered_stream_ext()
+            transcribe_parakeet_buffered_stream_ext_init(&ext)
+            ext.chunk_ms = Int32(chunk)
+            ext.right_ms = Int32(right)
+            return withFamily(&ext)
+        }
+        if lookaheadMs > 0, transcribe_model_accepts_ext_kind(model, TRANSCRIBE_EXT_SLOT_STREAM, TRANSCRIBE_EXT_KIND_PARAKEET_STREAM) {
+            // Nemotron: right context in 80 ms frames, trained at 0, 3, 6 and 13.
+            var ext = transcribe_parakeet_stream_ext()
+            transcribe_parakeet_stream_ext_init(&ext)
+            ext.att_context_right = Int32(closest([(80, 0), (320, 3), (560, 6), (1120, 13)]))
+            return withFamily(&ext)
+        }
+        return body(&stream)
     }
 
     /// Custom words as C strings, if the model takes them. The caller frees them.

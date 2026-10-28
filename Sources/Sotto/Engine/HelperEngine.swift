@@ -55,13 +55,14 @@ actor HelperEngine: SpeechEngine {
         return text ?? ""
     }
 
-    /// Starts a live stream, for models built to stream. `id` tags it.
-    func beginStream(id: Int) async throws {
+    /// Starts a live stream, for models built to stream. `id` tags it;
+    /// `lookaheadMs` is how long the model may wait before writing words.
+    func beginStream(id: Int, lookaheadMs: Int) async throws {
         try await load()
         let language = self.language
         let vocabulary = self.vocabulary
         let error: String? = try await call { proxy, done in
-            proxy.streamBegin(id: id, language: language, vocabulary: vocabulary) { done(.success($0)) }
+            proxy.streamBegin(id: id, language: language, vocabulary: vocabulary, lookaheadMs: lookaheadMs) { done(.success($0)) }
         }
         if let error { throw HelperError.failed(error) }
     }

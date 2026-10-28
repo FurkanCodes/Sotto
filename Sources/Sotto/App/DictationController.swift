@@ -373,7 +373,7 @@ final class DictationController {
 
         let live: any LiveTranscribing
         if catalogModel?.streams == true {
-            live = StreamingTranscriber(engine: helper, voice: voice, id: session) { [weak self] text in
+            live = StreamingTranscriber(engine: helper, voice: voice, id: session, lookaheadMs: settings.liveTextDelayMs) { [weak self] text in
                 Task { @MainActor in self?.showLiveText(text, session: session) }
             }
         } else {

@@ -2,9 +2,11 @@
 import Foundation
 import PackageDescription
 
-/// transcribe.cpp's static libraries, built by scripts/build-transcribe.sh.
-let transcribeLibraries = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-    .appendingPathComponent("Vendor/transcribe/lib").path
+/// transcribe.cpp's headers and static libraries, built by scripts/build-transcribe.sh.
+let transcribe = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("Vendor/transcribe")
+let transcribeLibraries = transcribe.appendingPathComponent("lib").path
+/// transcribe/parakeet.h includes "transcribe.h" from this folder.
+let transcribeHeaders = transcribe.appendingPathComponent("include").path
 
 let package = Package(
     name: "Sotto",
@@ -33,6 +35,7 @@ let package = Package(
             name: "SottoEngine",
             dependencies: ["CTranscribe", "SottoEngineProtocol"],
             path: "Sources/SottoEngine",
+            swiftSettings: [.unsafeFlags(["-Xcc", "-I", "-Xcc", transcribeHeaders])],
             linkerSettings: [.unsafeFlags(["-L", transcribeLibraries])]
         ),
         .testTarget(name: "SottoCoreTests", dependencies: ["SottoCore"], path: "Tests/SottoCoreTests"),

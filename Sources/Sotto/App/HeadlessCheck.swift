@@ -115,7 +115,8 @@ enum HeadlessCheck {
             let captions = Captions()
             let live: any LiveTranscribing
             if streams, let helper = engine as? HelperEngine {
-                live = StreamingTranscriber(engine: helper, voice: voice, id: run) { _ in captions.count() }
+                let lookahead = CommandLine.arguments.firstIndex(of: "--lookahead").flatMap { CommandLine.arguments[safe: $0 + 1] }.flatMap { Int($0) } ?? 0
+                live = StreamingTranscriber(engine: helper, voice: voice, id: run, lookaheadMs: lookahead) { _ in captions.count() }
             } else {
                 live = LiveTranscriber(engine: engine, voice: voice) { _ in captions.count() }
             }

@@ -80,6 +80,10 @@ public struct SottoSettings: Codable, Equatable, Sendable {
     public var modelID: String?
     /// A language code like "tr" for multilingual catalog models; nil detects it.
     public var modelLanguage: String?
+    /// For streaming models: how long the model may wait before it writes
+    /// words, in ms. Shorter shows live text sooner and is slightly less
+    /// accurate; 0 keeps the model's own default, its most accurate.
+    public var liveTextDelayMs = 480
 
     public init() {}
 
@@ -115,6 +119,7 @@ public struct SottoSettings: Codable, Equatable, Sendable {
         learnFromCorrections = value(.learnFromCorrections, defaults.learnFromCorrections)
         modelID = value(.modelID, defaults.modelID)
         modelLanguage = value(.modelLanguage, defaults.modelLanguage)
+        liveTextDelayMs = max(0, value(.liveTextDelayMs, defaults.liveTextDelayMs))
     }
 
     /// Decodes settings, falling back to defaults if the data isn't JSON at all.

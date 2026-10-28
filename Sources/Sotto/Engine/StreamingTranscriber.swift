@@ -22,13 +22,14 @@ actor StreamingTranscriber: LiveTranscribing {
         case notStarted, streaming, failed
     }
 
-    /// Audio is sent in batches of at least 256 ms: four mic buffers per
-    /// message instead of one. Nemotron decodes in 1.12 s chunks anyway.
-    private static let minFeed = 4096
 
     private let engine: HelperEngine
     private let voice: VoiceDetector
     private let id: Int
+    private let lookaheadMs: Int
+    /// Audio is sent in batches of up to 256 ms (four mic buffers), but no
+    /// more than a quarter of the lookahead, so batching adds little wait.
+    private let minFeed: Int
     /// Called with the whole text so far each time it changes.
     private let onText: (@Sendable (String) -> Void)?
     private var audio: [Float] = []
@@ -36,10 +37,12 @@ actor StreamingTranscriber: LiveTranscribing {
     private var state = State.notStarted
     private var lastText = ""
 
-    init(engine: HelperEngine, voice: VoiceDetector, id: Int, onText: (@Sendable (String) -> Void)? = nil) {
+    init(engine: HelperEngine, voice: VoiceDetector, id: Int, lookaheadMs: Int = 0, onText: (@Sendable (String) -> Void)? = nil) {
         self.engine = engine
         self.voice = voice
         self.id = id
+        self.lookaheadMs = lookaheadMs
+        minFeed = lookaheadMs > 0 ? min(4096, max(1024, lookaheadMs * 16 / 4)) : 4096
         self.onText = onText
     }
 
@@ -48,13 +51,13 @@ actor StreamingTranscriber: LiveTranscribing {
         if state == .notStarted {
             // The first chunk waits for the model to load; later chunks queue behind it.
             do {
-                try await engine.beginStream(id: id)
+                try await engine.beginStream(id: id, lookaheadMs: lookaheadMs)
                 state = .streaming
             } catch {
                 fail("start", error)
             }
         }
-        guard state == .streaming, audio.count - fed >= Self.minFeed else { return }
+        guard state == .streaming, audio.count - fed >= minFeed else { return }
         await feedRest()
     }
 
