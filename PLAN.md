@@ -30,10 +30,10 @@ These are checked by measurement, not by claims. On Apple Silicon, macOS 26.
 
 **Exit:** `scripts/build-app.sh` produces an app that launches as a menu bar icon, and `swift test` passes.
 
-## Phase 1: The whole pipeline ◐ (current goal: code written, headless engine check passed, waiting on a real-use test)
+## Phase 1: The whole pipeline ☑ (end-to-end test done; shipped since 0.2.0)
 
 Still open in Phase 1:
-- **Verify pinned models.** FluidAudio downloads the models itself; checking them against a SHA-256 list is not done yet.
+- ☑ **Verify pinned models.** The built-in model and voice detector downloads are pinned with SHA-256 in `Resources/neural-engine-models.json`.
 - ☑ Voice detection now runs during recording (Phase 2 work, done early).
 
 The goal is dictation working end to end in any app, with a basic pill. Polish comes later.

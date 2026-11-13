@@ -29,7 +29,7 @@ curl -fsSL https://raw.githubusercontent.com/FurkanCodes/Sotto/main/scripts/inst
 | | |
 |---|---|
 | 🔒 **Private** | Runs entirely on your Mac. No account, no cloud, no telemetry. |
-| ⚡ **Fast** | Text lands about 0.1 s after you let go. [Measured](docs/measurements.md). |
+| ⚡ **Fast** | Text lands 50–100 ms after you let go of a typical dictation. [Measured](docs/measurements.md). |
 | 🔋 **Battery-friendly** | Models run on the Neural Engine, Apple's low-power chip for AI, whenever they can: about 6× less power than the GPU. [See below](#battery-neural-engine-vs-gpu). |
 | 🪶 **Light** | Zero CPU while idle. The mic is on only while you hold the key. |
 
@@ -37,7 +37,7 @@ curl -fsSL https://raw.githubusercontent.com/FurkanCodes/Sotto/main/scripts/inst
 
 - **Hold to talk:** right Option, right Command, Fn, or a mouse button. Tap for hands-free.
 - **Live text** in a small on-screen pill while you speak.
-- **73 models:** Parakeet v3 is built in (25 languages). It and five more, including Parakeet Unified and Nemotron 3.5, run on the Neural Engine; the rest, like Whisper Turbo, run on the GPU. [Which runs where](docs/MODELS.md).
+- **74 models:** Parakeet v3 is built in (25 languages), and 73 more are a download away. It and five more, including Parakeet Unified and Nemotron 3.5, run on the Neural Engine; the rest, like Whisper Turbo, run on the GPU. [Which runs where](docs/MODELS.md).
 - **Clean output:** filler words removed, "at 2, actually 3" fixed to "at 3", style matched to each app.
 - **Your words:** a dictionary that learns from your corrections, replacements and snippets.
 - **Hands off:** say "send it" to press Return. Per-app auto-send.
@@ -59,7 +59,7 @@ curl -fsSL https://raw.githubusercontent.com/FurkanCodes/Sotto/main/scripts/inst
     <td><img src="docs/assets/screenshots/settings-shortcut.png" alt="Shortcut settings: Right Option, Right Command or Fn, a mouse button, apps to skip, and how the key works"></td>
   </tr>
   <tr>
-    <td><b>Models.</b> Pick from 72, on the Neural Engine or the GPU.</td>
+    <td><b>Models.</b> The built-in model or 73 more, on the Neural Engine or the GPU.</td>
     <td><b>Shortcut.</b> Right Option, Right Command, Fn or a mouse button; apps to skip.</td>
   </tr>
   <tr>
