@@ -1,0 +1,46 @@
+import AppKit
+
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    private var controller: DictationController?
+    private var statusMenu: StatusMenu?
+    private var windows: Windows?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        let store = SettingsStore()
+        let controller = DictationController(store: store, history: HistoryStore(), models: ModelStore())
+        let statusMenu = StatusMenu(controller: controller)
+        let windows = Windows(controller: controller)
+        controller.onChange = { [weak statusMenu] in statusMenu?.refresh() }
+        statusMenu.openSettings = { [weak windows] in windows?.showSettings() }
+        statusMenu.openModels = { [weak windows] in windows?.showSettings(pane: .models) }
+        statusMenu.openSetup = { [weak windows] in windows?.showSetup() }
+        statusMenu.openHistory = { [weak windows] in windows?.showHistory() }
+        statusMenu.openFileTranscription = { [weak windows] in windows?.showFileTranscription() }
+        self.controller = controller
+        self.statusMenu = statusMenu
+        self.windows = windows
+        controller.start()
+        if CommandLine.arguments.contains("--continue-setup") {
+            // Restarted from setup after Accessibility was allowed: carry on there.
+            windows.showSetup()
+        } else if store.settings.completedSetup, !Permission.missing.isEmpty {
+            // A permission was turned off since setup: show where to turn it back on.
+            windows.showSetup()
+        } else if !store.settings.completedSetup {
+            if Permission.missing.isEmpty, controller.isModelDownloaded {
+                // Already set up before the first-run window existed.
+                store.settings.completedSetup = true
+            } else {
+                windows.showSetup()
+            }
+        }
+    }
+
+    /// Opening Sotto again while it runs (from Finder or Spotlight) shows Settings.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        // During setup the Dock icon brings back the setup window, not Settings.
+        if windows?.isSettingUp == true { windows?.showSetup() } else { windows?.showSettings() }
+        return true
+    }
+}

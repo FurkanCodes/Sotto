@@ -1,0 +1,25 @@
+{
+  "description": "Shared self-correction cases. The rule only fires when the corrected and the correcting value are the same kind (number, day, name). Every Sotto implementation must pass these.",
+  "cases": [
+    { "input": "Let's meet at 2, actually 3, at the cafe near the office.", "expected": "Let's meet at 3, at the cafe near the office." },
+    { "input": "Send the report to Ali, no wait, Mehmet, by Friday.", "expected": "Send the report to Mehmet, by Friday." },
+    { "input": "The meeting is on Monday, no wait, Tuesday.", "expected": "The meeting is on Tuesday." },
+    { "input": "Book a table for 4, no 5 people.", "expected": "Book a table for 5 people." },
+    { "input": "Call me at 3 pm, actually 4 pm.", "expected": "Call me at 4 pm." },
+    { "input": "Call me at 3 pm, actually 4.", "expected": "Call me at 4 pm." },
+    { "input": "We'll launch in March, I mean April.", "expected": "We'll launch in April." },
+    { "input": "The discount is 20%, I mean 25%.", "expected": "The discount is 25%." },
+    { "input": "I need two, actually three copies.", "expected": "I need three copies." },
+    { "input": "Let's do it tomorrow. No wait, Friday.", "expected": "Let's do it Friday." },
+    { "input": "Buy 2, actually 3, no 4 boxes.", "expected": "Buy 4 boxes." },
+    { "input": "I actually like it.", "expected": "I actually like it." },
+    { "input": "It cost 2 dollars actually.", "expected": "It cost 2 dollars actually." },
+    { "input": "We have 2, actually more than 3.", "expected": "We have 2, actually more than 3." },
+    { "input": "Call Ali, actually he's busy today.", "expected": "Call Ali, actually he's busy today." },
+    { "input": "Great, actually Mehmet will come.", "expected": "Great, actually Mehmet will come." },
+    { "input": "Tell Ali, sorry Mehmet, about it.", "expected": "Tell Ali, sorry Mehmet, about it." },
+    { "input": "No, I mean it.", "expected": "No, I mean it." },
+    { "input": "Monday, actually, works for me.", "expected": "Monday, actually, works for me." },
+    { "input": "Is it Ali or Mehmet?", "expected": "Is it Ali or Mehmet?" }
+  ]
+}
