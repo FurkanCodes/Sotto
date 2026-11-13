@@ -7,6 +7,8 @@ import SwiftUI
 final class Windows {
     private let controller: DictationController
     private var settings: NSWindow?
+    /// Kept outside the window so the menu can open Settings on a given pane.
+    private let settingsNavigation = SettingsNavigation()
     private var setup: NSWindow?
     private var history: NSWindow?
     private var fileTranscription: NSWindow?
@@ -15,11 +17,12 @@ final class Windows {
         self.controller = controller
     }
 
-    func showSettings() {
+    func showSettings(pane: SettingsView.Pane? = nil) {
+        if let pane { settingsNavigation.pane = pane }
         if settings == nil {
             settings = makeWindow(
                 title: "Sotto Settings",
-                root: SettingsView(controller: controller),
+                root: SettingsView(controller: controller, navigation: settingsNavigation),
                 style: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             ) { [weak self] in self?.settings = nil }
             settings?.setContentSize(NSSize(width: 820, height: 580))
@@ -78,5 +81,8 @@ final class Windows {
         guard let window else { return }
         NSApp.activate()
         window.makeKeyAndOrderFront(nil)
+        // A menu bar app opened from Terminal or a script isn't always made
+        // active, so bring the window to the front on its own as well.
+        window.orderFrontRegardless()
     }
 }

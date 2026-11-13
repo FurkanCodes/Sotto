@@ -2,6 +2,13 @@ import AppKit
 import SottoCore
 import SwiftUI
 
+/// Which Settings pane is showing.
+@MainActor
+@Observable
+final class SettingsNavigation {
+    var pane: SettingsView.Pane? = .general
+}
+
 struct SettingsView: View {
     enum Pane: String, CaseIterable, Identifiable {
         case general, shortcut, models, dictionary, history, privacy, about
@@ -33,18 +40,18 @@ struct SettingsView: View {
     }
 
     let controller: DictationController
-    @State private var pane: Pane? = .general
+    @Bindable var navigation: SettingsNavigation
 
     var body: some View {
         NavigationSplitView {
-            List(Pane.allCases, selection: $pane) { pane in
+            List(Pane.allCases, selection: $navigation.pane) { pane in
                 Label(pane.title, systemImage: pane.icon).tag(pane)
             }
             .navigationSplitViewColumnWidth(200)
         } detail: {
             Group {
-                switch pane ?? .general {
-                case .general: GeneralPane(store: controller.store) { pane = .shortcut }
+                switch navigation.pane ?? .general {
+                case .general: GeneralPane(store: controller.store) { navigation.pane = .shortcut }
                 case .shortcut: ShortcutPane(store: controller.store)
                 case .models: ModelsPane(controller: controller, store: controller.store)
                 case .dictionary: DictionaryPane(store: controller.store)
@@ -53,7 +60,7 @@ struct SettingsView: View {
                 case .about: AboutPane()
                 }
             }
-            .navigationTitle((pane ?? .general).title)
+            .navigationTitle((navigation.pane ?? .general).title)
         }
         .frame(minWidth: 760, minHeight: 520)
     }
@@ -398,12 +405,18 @@ private struct ModelsPane: View {
                         ? "Automatic uses the Neural Engine when a model has a build for it that works as well, and the GPU otherwise. Switching downloads the other build."
                         : "This Mac has no Neural Engine, so models run on the GPU.")
                 }
-                TextField("Search by name or language, like Turkish", text: $search)
                 Toggle("Show all \(ModelCatalog.models.count) models", isOn: $showAll)
             } header: {
                 Text("More models")
             } footer: {
                 Text("Models marked Neural Engine run on Apple's low-power chip for AI; the rest run on the GPU in a separate helper process. Each downloads once from Hugging Face, pinned to a fixed version, and is checked before use.")
+            }
+
+            if shown.isEmpty {
+                Section {
+                    Text("No models match “\(search.trimmingCharacters(in: .whitespaces))”. Try a language, like Turkish, or a family, like Whisper.")
+                        .foregroundStyle(.secondary)
+                }
             }
 
             ForEach(Self.grouped(shown), id: \.title) { group in
@@ -417,6 +430,7 @@ private struct ModelsPane: View {
             }
         }
         .formStyle(.grouped)
+        .searchable(text: $search, placement: .toolbar, prompt: "Search models or languages")
     }
 
     private func details(_ model: CatalogModel) -> String {
@@ -666,11 +680,25 @@ private struct AboutPane: View {
     var body: some View {
         VStack(spacing: 10) {
             Spacer()
+            AppIconView(size: 112)
             Text("Sotto").font(.system(size: 34, weight: .semibold))
             Text("Version \(version)").foregroundStyle(.secondary)
             Text("Offline voice dictation for macOS.")
             Spacer()
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// Sotto's own icon, as the Dock and Finder show it.
+struct AppIconView: View {
+    let size: CGFloat
+
+    var body: some View {
+        Image(nsImage: NSApp.applicationIconImage)
+            .resizable()
+            .interpolation(.high)
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
     }
 }

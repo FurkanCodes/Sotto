@@ -39,27 +39,29 @@ ditto -x -k "$work/$name" "$work/unpacked"
 
 cat <<'EOF'
 
-About Apple's check (Gatekeeper)
---------------------------------
-Apps downloaded in a web browser get a "downloaded from the internet" mark
-(called quarantine). macOS checks marked apps the first time they open, and
-lets them open straight away only if Apple has notarized them.
+A quick heads-up before installing
+----------------------------------
+Hi! Sotto is a one-person project, and I don't have a paid Apple Developer
+account yet. That means Apple hasn't "notarized" Sotto, their stamp that
+says an app was checked. Once I get the account, I'll notarize Sotto and
+this question goes away.
 
-Sotto is signed, and its download was just checked against the release's
-SHA-256, but it isn't notarized: notarizing costs $99 a year. So if the
-mark stays, macOS blocks Sotto the first time. You then allow it once in
-System Settings -> Privacy & Security -> Open Anyway.
+Until then, macOS blocks apps without that stamp the first time they open.
+The app itself is fine: it's signed, it's open source, and the download was
+just checked against the release's checksum. But it's your Mac, so you
+decide how to open it:
 
-  YES: install Sotto without the mark. It opens straight away.
-  NO:  keep the mark. macOS checks Sotto and you allow it in System Settings.
+  YES: skip Apple's check, and Sotto opens right away.
+  NO:  keep Apple's check. macOS blocks Sotto the first time, and you allow
+       it once in System Settings -> Privacy & Security -> Open Anyway.
 
-Either way, Sotto is the same app. Choose NO if you'd rather macOS checked it.
+Either way you get the same app. Pick NO if you'd rather let macOS check it.
 EOF
 
 answer=""
 if [ -r /dev/tty ] && { exec 3</dev/tty; } 2>/dev/null; then
   while :; do
-    printf '\nOpen Sotto without Apple'"'"'s check? [yes/no]: ' >/dev/tty
+    printf '\nOK to open Sotto without Apple'"'"'s check? [yes/no]: ' >/dev/tty
     read -r answer <&3 || answer=""
     case "$(printf '%s' "$answer" | tr '[:upper:]' '[:lower:]')" in
       y|yes) answer=yes; break ;;

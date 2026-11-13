@@ -180,8 +180,9 @@ final class DictationController {
         pill.keySymbol = settings.dictationKey.symbol
         models.engine = settings.modelEngine
         store.onChange = { [weak self] settings in self?.apply(settings) }
+        // No permission prompts here: the setup window asks for each one
+        // when the user clicks it, so macOS's prompts don't pile up.
         retrySetup()
-        Task { await Permission.promptMissing() }
         Task {
             await downloadModelsIfNeeded()
             await prepareModel()

@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let windows = Windows(controller: controller)
         controller.onChange = { [weak statusMenu] in statusMenu?.refresh() }
         statusMenu.openSettings = { [weak windows] in windows?.showSettings() }
+        statusMenu.openModels = { [weak windows] in windows?.showSettings(pane: .models) }
         statusMenu.openSetup = { [weak windows] in windows?.showSetup() }
         statusMenu.openHistory = { [weak windows] in windows?.showHistory() }
         statusMenu.openFileTranscription = { [weak windows] in windows?.showFileTranscription() }
@@ -20,7 +21,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.statusMenu = statusMenu
         self.windows = windows
         controller.start()
-        if !store.settings.completedSetup {
+        if store.settings.completedSetup, !Permission.missing.isEmpty {
+            // A permission was turned off since setup: show where to turn it back on.
+            windows.showSetup()
+        } else if !store.settings.completedSetup {
             if Permission.missing.isEmpty, controller.isModelDownloaded {
                 // Already set up before the first-run window existed.
                 store.settings.completedSetup = true

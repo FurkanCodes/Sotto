@@ -24,6 +24,7 @@ struct SetupView: View {
         let key = controller.store.settings.dictationKey
         return VStack(spacing: 22) {
             VStack(spacing: 8) {
+                AppIconView(size: 96)
                 Text("Sotto").font(.system(size: 34, weight: .semibold))
                 Text("Three permissions and one download, then you're dictating. Nothing you say leaves this Mac.")
                     .foregroundStyle(.secondary)

@@ -10,6 +10,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     private let controller: DictationController
     private let menu = NSMenu()
     var openSettings: (() -> Void)?
+    var openModels: (() -> Void)?
     var openSetup: (() -> Void)?
     var openHistory: (() -> Void)?
     var openFileTranscription: (() -> Void)?
@@ -53,13 +54,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         }
 
         menu.addItem(microphoneMenu())
-        let model = MenuViews.valueItem("Model", value: "Parakeet v3")
-        let models = NSMenu()
-        let parakeet = NSMenuItem(title: "Parakeet TDT 0.6B v3", action: nil, keyEquivalent: "")
-        parakeet.state = .on
-        models.addItem(parakeet)
-        model.submenu = models
-        menu.addItem(model)
+        menu.addItem(modelMenu())
         menu.addItem(pauseMenu())
 
         let missing = Permission.missing
@@ -120,6 +115,31 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         name.hasSuffix(" Microphone") ? String(name.dropLast(" Microphone".count)) : name
     }
 
+    /// The built-in model and every downloaded one; choosing one switches to it.
+    private func modelMenu() -> NSMenuItem {
+        let current = controller.catalogModel
+        let entry = MenuViews.valueItem("Model", value: Self.shortModelName(current?.name ?? "Parakeet v3"))
+        let submenu = NSMenu()
+        let builtIn = action("Parakeet TDT 0.6B v3 (built in)", key: "", #selector(chooseModel(_:)))
+        builtIn.state = current == nil ? .on : .off
+        submenu.addItem(builtIn)
+        for model in ModelCatalog.models where controller.models.isInstalled(model) {
+            let row = action(model.name, key: "", #selector(chooseModel(_:)))
+            row.representedObject = model.id
+            row.state = current?.id == model.id ? .on : .off
+            submenu.addItem(row)
+        }
+        submenu.addItem(.separator())
+        submenu.addItem(action("Download More Models…", key: "", #selector(showModels)))
+        entry.submenu = submenu
+        return entry
+    }
+
+    /// Keeps a long name from running into the "Model" label.
+    private static func shortModelName(_ name: String) -> String {
+        name.count > 26 ? String(name.prefix(25)) + "…" : name
+    }
+
     private func pauseMenu() -> NSMenuItem {
         if controller.isPaused {
             return action("Resume Dictation", key: "", #selector(resume))
@@ -157,6 +177,10 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         controller.store.settings.microphoneUID = sender.representedObject as? String
     }
 
+    @objc private func chooseModel(_ sender: NSMenuItem) {
+        controller.store.settings.modelID = sender.representedObject as? String
+    }
+
     @objc private func pause(_ sender: NSMenuItem) {
         controller.pause(minutes: sender.tag == 0 ? nil : sender.tag)
     }
@@ -166,6 +190,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     }
 
     @objc private func showSettings() { openSettings?() }
+    @objc private func showModels() { openModels?() }
     @objc private func showHistory() { openHistory?() }
     @objc private func showFileTranscription() { openFileTranscription?() }
     @objc private func showSetup() { openSetup?() }
