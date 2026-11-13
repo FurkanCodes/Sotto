@@ -12,7 +12,13 @@ Hold a key, speak, let go. Your words appear wherever you type.
 ![Apple silicon](https://img.shields.io/badge/Apple%20silicon-M1%2B-111)
 [![License: MIT](https://img.shields.io/badge/license-MIT-111)](LICENSE)
 
-[**Download**](https://github.com/FurkanCodes/Sotto/releases) · [Install guide](docs/INSTALL.md) · [Roadmap](docs/FEATURES.md)
+**Install** by pasting this into Terminal:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/FurkanCodes/Sotto/main/scripts/install.sh | bash
+```
+
+[Download the zip instead](https://github.com/FurkanCodes/Sotto/releases) · [Install guide](docs/INSTALL.md) · [Roadmap](docs/FEATURES.md)
 
 </div>
 
@@ -85,7 +91,9 @@ In Terminal:
 curl -fsSL https://raw.githubusercontent.com/FurkanCodes/Sotto/main/scripts/install.sh | bash
 ```
 
-The [script](scripts/install.sh) downloads the latest release, checks its SHA-256 and installs it in Applications. Sotto isn't notarized by Apple, so the script explains what that means and asks whether macOS should check Sotto before its first launch: answer **yes** to open it straight away, or **no** to allow it once in System Settings. Then grant Microphone, Accessibility and Input Monitoring when asked.
+The [script](scripts/install.sh) downloads the latest release, checks its SHA-256 and installs it in Applications. Sotto isn't notarized by Apple yet, so the script explains what that means and asks whether macOS should check Sotto before its first launch: answer **yes** to open it straight away, or **no** to allow it once in System Settings.
+
+Sotto then opens its setup window. Allow Microphone, Accessibility and Input Monitoring one at a time, and it downloads its speech model (about 460 MB) once. Run the same command again to update.
 
 Or download `Sotto-x.y.z.zip` from [Releases](https://github.com/FurkanCodes/Sotto/releases) yourself: [docs/INSTALL.md](docs/INSTALL.md).
 
