@@ -80,7 +80,7 @@ public struct SottoSettings: Codable, Equatable, Sendable {
     /// Shows the transcribed text in the pill while dictating.
     public var showLiveText = true
     /// Shapes capitalization and punctuation for the app the text goes into.
-    public var matchStyleToApp = true
+    public var matchStyleToApp = false
     /// The user's per-app styles, overriding the built-in defaults.
     public var styleRules: [StyleRule] = []
     /// "at 2, actually 3" → "at 3", for clear corrections of numbers, days and names.
