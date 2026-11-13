@@ -4,6 +4,25 @@ Sotto runs on Macs with Apple silicon (M1 or later) and macOS 26 or later.
 
 Sotto is signed, but not notarized by Apple, so the first time you open it macOS blocks it. You allow it once, below. Updates need the same step.
 
+## The quick way: the install script
+
+In Terminal, run:
+
+```
+curl -fsSL https://raw.githubusercontent.com/FurkanCodes/Sotto/main/scripts/install.sh | bash
+```
+
+It downloads the latest release, checks it against its SHA-256, and puts `Sotto.app` in Applications, replacing an older version. You can [read the script](../scripts/install.sh) first.
+
+Before installing, it explains Apple's check and asks you to type **yes** or **no**:
+
+- **yes:** Sotto is installed without the "downloaded from the internet" mark, so macOS doesn't block it, and it opens straight away.
+- **no:** Sotto keeps the mark. macOS blocks it the first time, and you allow it as in step 3 below.
+
+Then go to step 4. Updates work the same way: run the command again.
+
+## By hand
+
 ## 1. Download and check the file
 
 Download `Sotto-<version>.zip` and `Sotto-<version>.zip.sha256` into the same folder. To check that the download wasn't damaged or changed, open Terminal in that folder and run:
@@ -49,7 +68,7 @@ It also downloads its speech model (about 460 MB), once. After that, Sotto never
 
 ## Updating
 
-Quit Sotto, replace `Sotto.app` in Applications with the new one, and repeat step 3. Your permissions and settings carry over, because every release is signed with the same certificate.
+Run the install script again, or quit Sotto, replace `Sotto.app` in Applications with the new one, and repeat step 3. Your permissions and settings carry over, because every release is signed with the same certificate.
 
 ## Uninstalling
 

@@ -79,11 +79,15 @@ Same words, about **6× less power**. By default Sotto uses the Neural Engine fo
 
 ## Install
 
-1. Download `Sotto-x.y.z.zip` from [Releases](https://github.com/FurkanCodes/Sotto/releases) and move `Sotto.app` to Applications.
-2. Sotto isn't notarized, so allow it once: System Settings → Privacy & Security → **Open Anyway**.
-3. Grant Microphone, Accessibility and Input Monitoring when asked.
+In Terminal:
 
-Step-by-step, with a Terminal alternative: [docs/INSTALL.md](docs/INSTALL.md).
+```sh
+curl -fsSL https://raw.githubusercontent.com/FurkanCodes/Sotto/main/scripts/install.sh | bash
+```
+
+The [script](scripts/install.sh) downloads the latest release, checks its SHA-256 and installs it in Applications. Sotto isn't notarized by Apple, so the script explains what that means and asks whether macOS should check Sotto before its first launch: answer **yes** to open it straight away, or **no** to allow it once in System Settings. Then grant Microphone, Accessibility and Input Monitoring when asked.
+
+Or download `Sotto-x.y.z.zip` from [Releases](https://github.com/FurkanCodes/Sotto/releases) yourself: [docs/INSTALL.md](docs/INSTALL.md).
 
 ## Build from source
 
