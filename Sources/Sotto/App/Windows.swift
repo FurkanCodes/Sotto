@@ -30,15 +30,26 @@ final class Windows {
         present(settings)
     }
 
+    var isSettingUp: Bool { setup != nil }
+
     func showSetup() {
         if setup == nil {
+            var view = SetupView(controller: controller) { [weak self] in self?.setup?.close() }
+            view.bringToFront = { [weak self] in self?.present(self?.setup) }
             setup = makeWindow(
                 title: "Set Up Sotto",
-                root: SetupView(controller: controller) { [weak self] in self?.setup?.close() },
+                root: view,
                 style: [.titled, .closable, .fullSizeContentView]
-            ) { [weak self] in self?.setup = nil }
+            ) { [weak self] in
+                self?.setup = nil
+                // Back to a menu bar app with no Dock icon.
+                NSApp.setActivationPolicy(.accessory)
+            }
             setup?.titlebarAppearsTransparent = true
         }
+        // A Dock icon while setting up, so the window can always be found again
+        // behind System Settings (a menu bar app has none, and isn't in ⌘-Tab).
+        NSApp.setActivationPolicy(.regular)
         present(setup)
     }
 

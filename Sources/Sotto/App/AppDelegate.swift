@@ -21,7 +21,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.statusMenu = statusMenu
         self.windows = windows
         controller.start()
-        if store.settings.completedSetup, !Permission.missing.isEmpty {
+        if CommandLine.arguments.contains("--continue-setup") {
+            // Restarted from setup after Accessibility was allowed: carry on there.
+            windows.showSetup()
+        } else if store.settings.completedSetup, !Permission.missing.isEmpty {
             // A permission was turned off since setup: show where to turn it back on.
             windows.showSetup()
         } else if !store.settings.completedSetup {
@@ -36,7 +39,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Opening Sotto again while it runs (from Finder or Spotlight) shows Settings.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        windows?.showSettings()
+        // During setup the Dock icon brings back the setup window, not Settings.
+        if windows?.isSettingUp == true { windows?.showSetup() } else { windows?.showSettings() }
         return true
     }
 }

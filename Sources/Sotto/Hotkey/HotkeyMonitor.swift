@@ -76,7 +76,7 @@ final class HotkeyMonitor {
         guard tap == nil else { return true }
         // Creating the tap without access makes macOS show its prompt, so wait
         // until the user allows it from the setup window.
-        guard CGPreflightListenEventAccess() else { return false }
+        guard CGPreflightListenEventAccess() || AXIsProcessTrusted() else { return false }
         let mask = CGEventMask(1 << CGEventType.flagsChanged.rawValue)
             | CGEventMask(1 << CGEventType.keyDown.rawValue)
             | CGEventMask(1 << CGEventType.otherMouseDown.rawValue)

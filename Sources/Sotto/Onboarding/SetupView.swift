@@ -7,11 +7,22 @@ import SwiftUI
 struct SetupView: View {
     let controller: DictationController
     let close: () -> Void
+    /// Brings this window back in front of System Settings.
+    var bringToFront: () -> Void = {}
     @State private var tryText = ""
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { _ in
             content
+                // Each permission is allowed in System Settings, which covers this
+                // window; come back as soon as one is allowed, showing the next step.
+                .onChange(of: Permission.missing.count) { before, after in
+                    if Permission.keyAccessNeedsRelaunch {
+                        Permission.relaunchToContinueSetup()
+                    } else if after < before {
+                        bringToFront()
+                    }
+                }
         }
     }
 
@@ -26,7 +37,7 @@ struct SetupView: View {
             VStack(spacing: 8) {
                 AppIconView(size: 96)
                 Text("Sotto").font(.system(size: 34, weight: .semibold))
-                Text("Three permissions and one download, then you're dictating. Nothing you say leaves this Mac.")
+                Text("Two permissions and one download, then you're dictating. Nothing you say leaves this Mac.")
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -34,9 +45,7 @@ struct SetupView: View {
             VStack(spacing: 0) {
                 permissionRow(1, .microphone, "So Sotto can hear you. Used only while you dictate.")
                 Divider()
-                permissionRow(2, .accessibility, "So Sotto can type the text into the app you're using.")
-                Divider()
-                permissionRow(3, .inputMonitoring, "So Sotto can tell when you hold \(key.title). It reads no other keys.")
+                permissionRow(2, .accessibility, "So Sotto can notice when you hold \(key.title) and type the text into the app you're using. It reads no other keys.")
                 Divider()
                 modelRow
             }
@@ -50,6 +59,11 @@ struct SetupView: View {
                     .controlSize(.large)
                     .lineLimit(2...4)
             }
+
+            Text("Sotto lives in your menu bar. Can't see it? Open Sotto again from Applications to get Settings.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack {
                 Spacer()
@@ -86,7 +100,7 @@ struct SetupView: View {
     }
 
     private var modelRow: some View {
-        StepRow(number: 4, title: "Speech model", detail: "Parakeet v3. Downloads once, then works offline.", done: modelDone) {
+        StepRow(number: 3, title: "Speech model", detail: "Parakeet v3. Downloads once, then works offline.", done: modelDone) {
             switch controller.status {
             case .downloading(let fraction):
                 ProgressView(value: fraction).frame(width: 120)
@@ -129,7 +143,10 @@ private struct StepRow<Trailing: View>: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.system(size: 14, weight: .semibold))
                 Text(detail).font(.callout).foregroundStyle(.secondary)
+                    // Wrap onto a second line instead of cutting off with "…".
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .help(detail)
             Spacer(minLength: 12)
             HStack(spacing: 8) { trailing }
         }

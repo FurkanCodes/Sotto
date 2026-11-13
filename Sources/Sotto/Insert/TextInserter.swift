@@ -73,6 +73,15 @@ final class TextInserter: NSObject {
         await acquire()
         defer { release() }
 
+        // Into Sotto's own window, like setup's "Try it" box: a menu bar app
+        // has no Edit menu, so ⌘V does nothing, and Accessibility can't reach
+        // its own fields. Write into the focused text field directly instead.
+        if NSApp.isActive, let field = NSApp.keyWindow?.firstResponder as? NSTextView, field.isEditable {
+            field.insertText(text, replacementRange: field.selectedRange())
+            let now = ProcessInfo.processInfo.systemUptime
+            return .inserted(method: .typing, chordAt: now, landedAt: now)
+        }
+
         let pasteboard = NSPasteboard.general
         var saved: Snapshot
         let vKey: CGKeyCode

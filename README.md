@@ -93,7 +93,7 @@ curl -fsSL https://raw.githubusercontent.com/FurkanCodes/Sotto/main/scripts/inst
 
 The [script](scripts/install.sh) downloads the latest release, checks its SHA-256 and installs it in Applications. Sotto isn't notarized by Apple yet, so the script explains what that means and asks whether macOS should check Sotto before its first launch: answer **yes** to open it straight away, or **no** to allow it once in System Settings.
 
-Sotto then opens its setup window. Allow Microphone, Accessibility and Input Monitoring one at a time, and it downloads its speech model (about 460 MB) once. Run the same command again to update.
+Sotto then opens its setup window. Allow Microphone and Accessibility one at a time, and it downloads its speech model (about 460 MB) once. Run the same command again to update.
 
 Or download `Sotto-x.y.z.zip` from [Releases](https://github.com/FurkanCodes/Sotto/releases) yourself: [docs/INSTALL.md](docs/INSTALL.md).
 

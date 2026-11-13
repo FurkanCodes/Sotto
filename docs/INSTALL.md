@@ -58,11 +58,10 @@ This removes the "downloaded from the internet" mark that makes macOS block the 
 
 ## 4. Grant permissions
 
-On first launch, Sotto asks for three permissions and explains each one:
+On first launch, Sotto's setup window asks for two permissions, one at a time, and explains each one:
 
 - **Microphone**, to hear you while you hold the dictation key.
-- **Accessibility**, to paste the text into the app you're typing in.
-- **Input Monitoring**, to notice when you press and release the dictation key.
+- **Accessibility**, to notice when you hold the dictation key and to paste the text into the app you're typing in.
 
 It also downloads its speech model (about 460 MB), once. After that, Sotto never uses the network: your voice and text stay on your Mac.
 
