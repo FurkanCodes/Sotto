@@ -2415,6 +2415,28 @@
       }
     },
     {
+      "id": "parakeet-tdt-0.6b-tr2",
+      "name": "Parakeet TDT 0.6B Turkish",
+      "description": "Fine-tuned on Turkish, writes capitals and punctuation (FLEURS 10.6% WER)",
+      "repository": "velifurkan/parakeet-tdt-0.6b-tr-gguf",
+      "revision": "660cb1e49ab6e74c548c15958a8b3ac40392d4ce",
+      "previousRevisions": [],
+      "license": "cc-by-4.0",
+      "family": "parakeet",
+      "parameters": "618M",
+      "languages": [
+        "tr"
+      ],
+      "capabilities": {"streaming": false, "translate": false, "languageDetection": false, "timestamps": true},
+      "quant": "Q8_0",
+      "role": "asr",
+      "curated": true,
+      "minEngine": "0.2.4",
+      "files": {
+        "Q8_0": {"filename": "parakeet-tdt-0.6b-tr-Q8_0.gguf", "size": 729577248, "sha256": "2905416f610039e83905846b8decc3713b3b2fe256c3c75cee3d41d5bac8999b"}
+      }
+    },
+    {
       "id": "parakeet-primeline",
       "name": "Parakeet Primeline",
       "description": "",

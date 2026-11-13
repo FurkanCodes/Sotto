@@ -31,7 +31,7 @@ Hold a key, speak, let go. Your words appear wherever you type.
 
 - **Hold to talk:** right Option, right Command, Fn, or a mouse button. Tap for hands-free.
 - **Live text** in a small on-screen pill while you speak.
-- **72 models:** Parakeet v3 is built in (25 languages). It and five more, including Parakeet Unified and Nemotron 3.5, run on the Neural Engine; the rest, like Whisper Turbo, run on the GPU. [Which runs where](docs/MODELS.md).
+- **73 models:** Parakeet v3 is built in (25 languages). It and five more, including Parakeet Unified and Nemotron 3.5, run on the Neural Engine; the rest, like Whisper Turbo, run on the GPU. [Which runs where](docs/MODELS.md).
 - **Clean output:** filler words removed, "at 2, actually 3" fixed to "at 3", style matched to each app.
 - **Your words:** a dictionary that learns from your corrections, replacements and snippets.
 - **Hands off:** say "send it" to press Return. Per-app auto-send.
